@@ -114,12 +114,14 @@ Theorem rev_exercise1 : forall (l l' : list nat),
      l = rev l' ->
      l' = rev l.
 Proof.
-  intros l1 l2 H.
-  induction l1.
-    - simpl. destruct l2 as [| l2'] eqn:E.
+  intros l1.
+  induction l1 as [| n1 l1' IHl1'].
+    - simpl. intros l2. induction l2 as [| n2 l2' IHl2'].
       + reflexivity.
-      + simpl. simpl in H.
+      + intros eq. 
+    
       
+  Abort.
 (** [] *)
 
 (** **** Exercise: 1 star, standard, optional (apply_rewrite) 
@@ -202,7 +204,7 @@ Example trans_eq_exercise : forall (n m o p : nat),
      (n + p) = (minustwo o).
 Proof.
   intros n m o p H1 H2.
-  transitivity m.
+  apply trans_eq with m.
   apply H2. apply H1.
 Qed.
 
@@ -652,7 +654,15 @@ Proof.
     destruct m as [| m'].
     + simpl in H. reflexivity.
     + simpl in H. discriminate.
-  - inr  
+  - induction m as [| m' IHm'].
+    + simpl. intros contra. discriminate contra.
+    + intros eq. simpl in eq. injection eq as eq1.
+    rewrite <- plus_n_Sm in eq1.  
+    rewrite <- plus_n_Sm in eq1.  
+    injection eq1 as eq2.
+    apply IHn' in eq2.
+    rewrite eq2. reflexivity.
+Qed.
 
 (** [] *)
 
@@ -760,7 +770,16 @@ Theorem nth_error_after_last: forall (n : nat) (X : Type) (l : list X),
      length l = n ->
      nth_error l n = None.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n X l.
+  generalize dependent n.
+  induction l as [| m l' IHl'].
+    - intros n eq. simpl. reflexivity.
+    - intros n eq. simpl.
+      destruct n as [| n'].
+      + discriminate.
+      + apply IHl'. simpl in eq. injection eq as eq1. apply eq1.
+  Qed. 
+
 (** [] *)
 
 (* ################################################################# *)
@@ -945,7 +964,13 @@ Theorem combine_split : forall X Y (l : list (X * Y)) l1 l2,
   split l = (l1, l2) ->
   combine l1 l2 = l.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X Y l. induction l as [| n l' IHl'].
+  - intros l1 l2 H. injection H as H1 H2. rewrite <- H1. rewrite <- H2. reflexivity.
+  - intros l1 l2 H. destruct n as [n1 n2]. 
+    + simpl in H. destruct (split l') as [l1' l2'] eqn:E.
+    injection H as H1 H2. rewrite <- H1. rewrite <- H2. simpl. rewrite IHl'. reflexivity. reflexivity. 
+Qed.
+
 (** [] *)
 
 (** The [eqn:] part of the [destruct] tactic is optional: So far,
@@ -1020,7 +1045,11 @@ Theorem bool_fn_applied_thrice :
   forall (f : bool -> bool) (b : bool),
   f (f (f b)) = f b.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros f b. apply f_equal.
+  destruct b eqn:Eb.
+  Admitted.
+
+
 (** [] *)
 
 (* ################################################################# *)
@@ -1101,7 +1130,16 @@ Proof.
 Theorem eqb_sym : forall (n m : nat),
   (n =? m) = (m =? n).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m.
+  generalize dependent n.
+  induction m as [| m' IHm'].
+  - simpl. destruct n eqn:En.
+    + reflexivity.
+    + simpl. reflexivity.
+  - simpl. destruct n as [| n'] eqn:En.
+    + reflexivity.
+    + simpl. apply IHm'.
+Qed. 
 (** [] *)
 
 (** **** Exercise: 3 stars, advanced, optional (eqb_sym_informal) 
