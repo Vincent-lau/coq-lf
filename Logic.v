@@ -148,7 +148,16 @@ Qed.
 Example and_exercise :
   forall n m : nat, n + m = 0 -> n = 0 /\ m = 0.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m H.
+  split.
+    - destruct n as [| n'] eqn:En.
+      + reflexivity.
+      + discriminate H.
+    - destruct m as [| m'] eqn:Em.
+      + reflexivity.
+      + assert (H': n + S m' = S m' + n). { apply plus_comm. }
+      rewrite H' in H. discriminate H.
+  Qed.
 (** [] *)
 
 (** So much for proving conjunctive statements.  To go in the other
@@ -226,7 +235,9 @@ Proof.
 Lemma proj2 : forall P Q : Prop,
   P /\ Q -> Q.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros P Q H.
+  destruct H as [_ Hq].
+  apply Hq. Qed.
 (** [] *)
 
 (** Finally, we sometimes need to rearrange the order of conjunctions
@@ -253,7 +264,13 @@ Theorem and_assoc : forall P Q R : Prop,
   P /\ (Q /\ R) -> (P /\ Q) /\ R.
 Proof.
   intros P Q R [HP [HQ HR]].
-  (* FILL IN HERE *) Admitted.
+  split.
+    - split.
+      + apply HP.
+      + apply HQ.
+    - apply HR.
+    Qed.
+
 (** [] *)
 
 (** By the way, the infix notation [/\] is actually just syntactic
@@ -317,14 +334,22 @@ Qed.
 Lemma mult_eq_0 :
   forall n m, n * m = 0 -> n = 0 \/ m = 0.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros [|n'] [|m'] H.
+  - left. reflexivity.
+  - left. reflexivity.
+  - right. reflexivity.
+  - discriminate H.
+  Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, standard (or_commut)  *)
 Theorem or_commut : forall P Q : Prop,
   P \/ Q  -> Q \/ P.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros P Q [HP | HQ].
+  - right. apply HP.
+  - left. apply HQ. Qed. 
+
 (** [] *)
 
 (* ================================================================= *)
@@ -380,7 +405,12 @@ Proof.
 Fact not_implies_our_not : forall (P:Prop),
   ~ P -> (forall (Q:Prop), P -> Q).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros P H Q HP.
+  unfold not in H.
+  apply H in HP.
+  destruct HP.
+  Qed.
+
 (** [] *)
 
 (** Inequality is a frequent enough example of negated statement
@@ -417,7 +447,7 @@ Qed.
 
 Theorem not_False :
   ~ False.
-Proof.
+  Proof.
   unfold not. intros H. destruct H. Qed.
 
 Theorem contradiction_implies_anything : forall P Q : Prop,
@@ -449,14 +479,26 @@ Definition manual_grade_for_double_neg_inf : option (nat*string) := None.
 Theorem contrapositive : forall (P Q : Prop),
   (P -> Q) -> (~Q -> ~P).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros P Q.
+  unfold not.
+  intros H1 H2 P1.
+  apply H1 in P1.
+  apply H2 in P1.
+  apply P1.
+  Qed.
+
 (** [] *)
 
 (** **** Exercise: 1 star, standard (not_both_true_and_false)  *)
 Theorem not_both_true_and_false : forall P : Prop,
   ~ (P /\ ~P).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros P. unfold not.
+  intros [H1 H2].
+  apply H2 in H1. destruct H1.
+Qed.
+
+
 (** [] *)
 
 (** **** Exercise: 1 star, advanced (informal_not_PNP) 
@@ -568,19 +610,46 @@ Qed.
 Theorem iff_refl : forall P : Prop,
   P <-> P.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros P. split.
+  - trivial.
+  - trivial.
+Qed.
+
 
 Theorem iff_trans : forall P Q R : Prop,
   (P <-> Q) -> (Q <-> R) -> (P <-> R).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros P Q R.
+  intros H1 H2.
+  split.
+    - intros P1. apply H1 in P1. apply H2 in P1. apply P1.
+    - intros R1. apply H2 in R1. apply H1 in R1. apply R1. 
+  Qed.
+
 (** [] *)
 
 (** **** Exercise: 3 stars, standard (or_distributes_over_and)  *)
 Theorem or_distributes_over_and : forall P Q R : Prop,
   P \/ (Q /\ R) <-> (P \/ Q) /\ (P \/ R).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros P Q R.
+  split.
+    - intros H. destruct H as [H1 | [H2 H3]]. split.
+      + left. apply H1.
+      + left. apply H1. 
+      + split.
+        -- right. apply H2.
+        -- right. apply H3. 
+    - intros [[H1 | H2] [H3 | H4]].
+      + left. trivial.
+      + left. trivial. 
+      + left. trivial.
+      + right. split.
+        -- trivial.
+        -- trivial.
+
+    Qed. 
+
 (** [] *)
 
 (* ================================================================= *)
@@ -700,7 +769,8 @@ Proof.
 Theorem dist_not_exists : forall (X:Type) (P : X -> Prop),
   (forall x, P x) -> ~ (exists x, ~ P x).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X P. intros H.
+  unfold not. intros [x E]. apply E in H. trivial. Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard (dist_exists_or) 
@@ -711,7 +781,13 @@ Proof.
 Theorem dist_exists_or : forall (X:Type) (P Q : X -> Prop),
   (exists x, P x \/ Q x) <-> (exists x, P x) \/ (exists x, Q x).
 Proof.
-   (* FILL IN HERE *) Admitted.
+  intro X. intros P Q. split.
+  - intros [x [HP | HQ]].
+    + left. exists x. apply HP.
+    + right. exists x. apply HQ. 
+  - intros [[x HP] | [x HQ]].
+    + exists x. left. apply HP.
+    + exists x. right. apply HQ. Qed.
 (** [] *)
 
 (* ################################################################# *)

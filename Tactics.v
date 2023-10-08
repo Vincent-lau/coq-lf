@@ -1160,7 +1160,17 @@ Theorem eqb_trans : forall n m p,
   m =? p = true ->
   n =? p = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m p.
+  generalize dependent n.
+  generalize dependent p.
+  induction m as [| m' IHm'].
+    - intros p n H1. simpl. destruct p eqn:Ep .
+      + intros H2. apply H1.
+      + intros contra. discriminate contra.
+    - intros p n. simpl. destruct p as [| p'] eqn:Ep.
+      + intros H1 H2. discriminate H2.
+      + 
+Abort.
 (** [] *)
 
 (** **** Exercise: 3 stars, advanced (split_combine) 
