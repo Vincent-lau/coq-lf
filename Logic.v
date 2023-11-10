@@ -871,8 +871,6 @@ Theorem In_map_iff :
     In y (map f l) <->
     exists x, f x = y /\ In x l.
 Proof.
-  intros A B f l y. split.
-    - intros H. apply In_map in H. 
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
