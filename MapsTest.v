@@ -67,6 +67,12 @@ idtac "".
 idtac "Allowed Axioms:".
 idtac "functional_extensionality".
 idtac "FunctionalExtensionality.functional_extensionality_dep".
+idtac "plus_le".
+idtac "le_trans".
+idtac "le_plus_l".
+idtac "add_le_cases".
+idtac "Sn_le_Sm__n_le_m".
+idtac "O_le_n".
 idtac "".
 idtac "".
 idtac "********** Summary **********".
@@ -88,6 +94,6 @@ idtac "".
 idtac "********** Advanced **********".
 Abort.
 
-(* 2020-08-19 10:30 *)
+(* 2023-10-03 16:40 *)
 
-(* 2020-08-19 10:30 *)
+(* 2023-10-03 16:40 *)

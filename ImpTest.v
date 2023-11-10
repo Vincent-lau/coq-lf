@@ -210,7 +210,7 @@ idtac " ".
 
 idtac "#> BreakImp.while_stops_on_break".
 idtac "Advanced".
-idtac "Possible points: 3".
+idtac "Possible points: 1".
 check_type @BreakImp.while_stops_on_break (
 (forall (b : bexp) (c : BreakImp.com) (st st' : state),
  beval st b = true ->
@@ -222,6 +222,33 @@ Print Assumptions BreakImp.while_stops_on_break.
 Goal True.
 idtac " ".
 
+idtac "#> BreakImp.seq_continue".
+idtac "Advanced".
+idtac "Possible points: 1".
+check_type @BreakImp.seq_continue (
+(forall (c1 c2 : BreakImp.com) (st st' st'' : state),
+ BreakImp.ceval c1 st BreakImp.SContinue st' ->
+ BreakImp.ceval c2 st' BreakImp.SContinue st'' ->
+ BreakImp.ceval (BreakImp.CSeq c1 c2) st BreakImp.SContinue st'')).
+idtac "Assumptions:".
+Abort.
+Print Assumptions BreakImp.seq_continue.
+Goal True.
+idtac " ".
+
+idtac "#> BreakImp.seq_stops_on_break".
+idtac "Advanced".
+idtac "Possible points: 1".
+check_type @BreakImp.seq_stops_on_break (
+(forall (c1 c2 : BreakImp.com) (st st' : state),
+ BreakImp.ceval c1 st BreakImp.SBreak st' ->
+ BreakImp.ceval (BreakImp.CSeq c1 c2) st BreakImp.SBreak st')).
+idtac "Assumptions:".
+Abort.
+Print Assumptions BreakImp.seq_stops_on_break.
+Goal True.
+idtac " ".
+
 idtac " ".
 
 idtac "Max points - standard: 29".
@@ -230,6 +257,12 @@ idtac "".
 idtac "Allowed Axioms:".
 idtac "functional_extensionality".
 idtac "FunctionalExtensionality.functional_extensionality_dep".
+idtac "plus_le".
+idtac "le_trans".
+idtac "le_plus_l".
+idtac "add_le_cases".
+idtac "Sn_le_Sm__n_le_m".
+idtac "O_le_n".
 idtac "".
 idtac "".
 idtac "********** Summary **********".
@@ -275,8 +308,12 @@ idtac "---------- BreakImp.while_continue ---------".
 Print Assumptions BreakImp.while_continue.
 idtac "---------- BreakImp.while_stops_on_break ---------".
 Print Assumptions BreakImp.while_stops_on_break.
+idtac "---------- BreakImp.seq_continue ---------".
+Print Assumptions BreakImp.seq_continue.
+idtac "---------- BreakImp.seq_stops_on_break ---------".
+Print Assumptions BreakImp.seq_stops_on_break.
 Abort.
 
-(* 2020-08-19 10:30 *)
+(* 2023-10-03 16:40 *)
 
-(* 2020-08-19 10:30 *)
+(* 2023-10-03 16:40 *)

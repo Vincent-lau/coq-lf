@@ -8,10 +8,10 @@ Module NatList.
 
 (** In an [Inductive] type definition, each constructor can take
     any number of arguments -- none (as with [true] and [O]), one (as
-    with [S]), or more than one (as with [nybble], and here): *)
+    with [S]), or more than one (as with [nybble], and the following): *)
 
 Inductive natprod : Type :=
-| pair (n1 n2 : nat).
+  | pair (n1 n2 : nat).
 
 (** This declaration can be read: "The one and only way to
     construct a pair of numbers is by applying the constructor [pair]
@@ -19,8 +19,8 @@ Inductive natprod : Type :=
 
 Check (pair 3 5) : natprod.
 
-(** Here are simple functions for extracting the first and
-    second components of a pair. *)
+(** Functions for extracting the first and second components of a pair
+    can then be defined by pattern matching. *)
 
 Definition fst (p : natprod) : nat :=
   match p with
@@ -35,8 +35,8 @@ Definition snd (p : natprod) : nat :=
 Compute (fst (pair 3 5)).
 (* ===> 3 *)
 
-(** Since pairs will be used heavily in what follows, it is nice
-    to be able to write them with the standard mathematical notation
+(** Since pairs will be used heavily in what follows, it will be
+    convenient to write them with the standard mathematical notation
     [(x,y)] instead of [pair x y].  We can tell Coq to allow this with
     a [Notation] declaration. *)
 
@@ -63,12 +63,11 @@ Definition swap_pair (p : natprod) : natprod :=
   end.
 
 (** Note that pattern-matching on a pair (with parentheses: [(x, y)])
-    is not to be confused with the "multiple pattern" syntax
-    (with no parentheses: [x, y]) that we have seen previously.
-    The above examples illustrate pattern matching on a pair with
-    elements [x] and [y], whereas, for example, the definition of [minus] in
-    [Basics] performs pattern matching on the values [n]
-    and [m]:
+    is not to be confused with the "multiple pattern" syntax (with no
+    parentheses: [x, y]) that we have seen previously.  The above
+    examples illustrate pattern matching on a pair with elements [x]
+    and [y], whereas, for example, the definition of [minus] in
+    [Basics] performs pattern matching on the values [n] and [m]:
 
        Fixpoint minus (n m : nat) : nat :=
          match n, m with
@@ -96,18 +95,16 @@ Definition swap_pair (p : natprod) : natprod :=
           end.
 *)
 
-(** Now let's try to prove a few simple facts about pairs.
-
-    If we state properties of pairs in a slightly peculiar way, we can
-    sometimes complete their proofs with just reflexivity (and its
-    built-in simplification): *)
+(** If we state properties of pairs in a slightly peculiar way, we can
+    sometimes complete their proofs with just reflexivity and its
+    built-in simplification: *)
 
 Theorem surjective_pairing' : forall (n m : nat),
   (n,m) = (fst (n,m), snd (n,m)).
 Proof.
-  reflexivity.  Qed.
+  reflexivity. Qed.
 
-(** But [reflexivity] is not enough if we state the lemma in a more
+(** But just [reflexivity] is not enough if we state the lemma in a more
     natural way: *)
 
 Theorem surjective_pairing_stuck : forall (p : natprod),
@@ -123,23 +120,21 @@ Abort.
 Theorem surjective_pairing : forall (p : natprod),
   p = (fst p, snd p).
 Proof.
-  intros p.  destruct p as [n m].  simpl.  reflexivity.  Qed.
+  intros p. destruct p as [n m]. simpl. reflexivity. Qed.
 
-(** Notice that, unlike its behavior with [nat]s, where it
-    generates two subgoals, [destruct] generates just one subgoal
-    here.  That's because [natprod]s can only be constructed in one
-    way. *)
+(** Notice that, by contrast with the behavior of [destruct] on
+    [nat]s, where it generates two subgoals, [destruct] generates just
+    one subgoal here.  That's because [natprod]s can only be
+    constructed in one way. *)
 
-(** **** Exercise: 1 star, standard (snd_fst_is_swap)  *)
+(** **** Exercise: 1 star, standard (snd_fst_is_swap) *)
 Theorem snd_fst_is_swap : forall (p : natprod),
   (snd p, fst p) = swap_pair p.
 Proof.
-  destruct p as [n m]. simpl. reflexivity.
-Qed.
-
+  (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 1 star, standard, optional (fst_swap_is_snd)  *)
+(** **** Exercise: 1 star, standard, optional (fst_swap_is_snd) *)
 Theorem fst_swap_is_snd : forall (p : natprod),
   fst (swap_pair p) = snd p.
 Proof.
@@ -161,10 +156,10 @@ Inductive natlist : Type :=
 
 Definition mylist := cons 1 (cons 2 (cons 3 nil)).
 
-(** As with pairs, it is more convenient to write lists in
-    familiar programming notation.  The following declarations
-    allow us to use [::] as an infix [cons] operator and square
-    brackets as an "outfix" notation for constructing lists. *)
+(** As with pairs, it is convenient to write lists in familiar
+    notation.  The following declarations allow us to use [::] as an
+    infix [cons] operator and square brackets as an "outfix" notation
+    for constructing lists. *)
 
 Notation "x :: l" := (cons x l)
                      (at level 60, right associativity).
@@ -187,32 +182,37 @@ Definition mylist3 := [1;2;3].
     For example, since we defined [+] as infix notation for the [plus]
     function at level 50,
 
-  Notation "x + y" := (plus x y)
-                      (at level 50, left associativity).
+  Notation "x + y" := (plus x y) (at level 50, left associativity).
 
     the [+] operator will bind tighter than [::], so [1 + 2 :: [3]]
-    will be parsed, as we'd expect, as [(1 + 2) :: [3]] rather than
-    [1 + (2 :: [3])].
+    will be parsed, as we'd expect, as [(1 + 2) :: [3]] rather than [1
+    + (2 :: [3])].
 
     (Expressions like "[1 + 2 :: [3]]" can be a little confusing when
-    you read them in a [.v] file.  The inner brackets, around 3, indicate
-    a list, but the outer brackets, which are invisible in the HTML
-    rendering, are there to instruct the "coqdoc" tool that the bracketed
-    part should be displayed as Coq code rather than running text.)
+    you read them in a [.v] file.  The inner brackets, around 3,
+    indicate a list, but the outer brackets, which are invisible in
+    the HTML rendering, are there to instruct the "coqdoc" tool that
+    the bracketed part should be displayed as Coq code rather than
+    running text.)
 
     The second and third [Notation] declarations above introduce the
     standard square-bracket notation for lists; the right-hand side of
     the third one illustrates Coq's syntax for declaring n-ary
     notations and translating them to nested sequences of binary
-    constructors. *)
+    constructors.
+
+    Again, don't worry if some of these parsing details are puzzling:
+    all the notations you'll need in this course will be defined for
+    you.
+*)
 
 (* ----------------------------------------------------------------- *)
 (** *** Repeat *)
 
 (** Next let's look at several functions for constructing and
-    manipulating lists.  First, the [repeat] function takes a number
-    [n] and a [count] and returns a list of length [count] in which
-    every element is [n]. *)
+    manipulating lists.  First, the [repeat] function, which takes a
+    number [n] and a [count] and returns a list of length [count] in
+    which every element is [n]. *)
 
 Fixpoint repeat (n count : nat) : natlist :=
   match count with
@@ -234,7 +234,7 @@ Fixpoint length (l:natlist) : nat :=
 (* ----------------------------------------------------------------- *)
 (** *** Append *)
 
-(** The [app] function concatenates (appends) two lists. *)
+(** The [app] function appends (concatenates) two lists. *)
 
 Fixpoint app (l1 l2 : natlist) : natlist :=
   match l1 with
@@ -249,11 +249,11 @@ Notation "x ++ y" := (app x y)
                      (right associativity, at level 60).
 
 Example test_app1:             [1;2;3] ++ [4;5] = [1;2;3;4;5].
-Proof. reflexivity.  Qed.
+Proof. reflexivity. Qed.
 Example test_app2:             nil ++ [4;5] = [4;5].
-Proof. reflexivity.  Qed.
+Proof. reflexivity. Qed.
 Example test_app3:             [1;2;3] ++ nil = [1;2;3].
-Proof. reflexivity.  Qed.
+Proof. reflexivity. Qed.
 
 (* ----------------------------------------------------------------- *)
 (** *** Head and Tail *)
@@ -264,93 +264,83 @@ Proof. reflexivity.  Qed.
     "tail").  Since the empty list has no first element, we pass
     a default value to be returned in that case.  *)
 
-Definition hd (default:nat) (l:natlist) : nat :=
+Definition hd (default : nat) (l : natlist) : nat :=
   match l with
   | nil => default
   | h :: t => h
   end.
 
-Definition tl (l:natlist) : natlist :=
+Definition tl (l : natlist) : natlist :=
   match l with
   | nil => nil
   | h :: t => t
   end.
 
 Example test_hd1:             hd 0 [1;2;3] = 1.
-Proof. reflexivity.  Qed.
+Proof. reflexivity. Qed.
 Example test_hd2:             hd 0 [] = 0.
-Proof. reflexivity.  Qed.
+Proof. reflexivity. Qed.
 Example test_tl:              tl [1;2;3] = [2;3].
-Proof. reflexivity.  Qed.
+Proof. reflexivity. Qed.
 
 (* ----------------------------------------------------------------- *)
 (** *** Exercises *)
 
-(** **** Exercise: 2 stars, standard, especially useful (list_funs) 
+(** **** Exercise: 2 stars, standard, especially useful (list_funs)
 
     Complete the definitions of [nonzeros], [oddmembers], and
     [countoddmembers] below. Have a look at the tests to understand
     what these functions should do. *)
 
-Fixpoint nonzeros (l:natlist) : natlist :=
-  match l with
-  | nil => nil
-  | h :: t => 
-    match h with
-    | O => nonzeros t
-    | S n => (S n) :: (nonzeros t)
-    end
-  end.
+Fixpoint nonzeros (l:natlist) : natlist
+  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
 
 Example test_nonzeros:
   nonzeros [0;1;0;2;3;0;0] = [1;2;3].
-  reflexivity.
-Qed.
+  (* FILL IN HERE *) Admitted.
 
-Fixpoint oddmembers (l:natlist) : natlist :=
-  match l with
-  | nil => nil
-  | h :: t =>
-    match oddb h with
-    | true => h :: (oddmembers t)
-    | false => oddmembers t
-    end
-  end.
+Fixpoint oddmembers (l:natlist) : natlist
+  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
 
 Example test_oddmembers:
   oddmembers [0;1;0;2;3;0;0] = [1;3].
-  reflexivity.
-Qed.
+  (* FILL IN HERE *) Admitted.
 
-Definition countoddmembers (l:natlist) : nat :=
-  length (oddmembers l).
+(** For the next problem, [countoddmembers], we're giving you a header
+    that uses the keyword [Definition] instead of [Fixpoint].  The
+    point of stating the question this way is to encourage you to
+    implement the function by using already-defined functions, rather
+    than writing your own recursive definition. *)
+
+Definition countoddmembers (l:natlist) : nat
+  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
 
 Example test_countoddmembers1:
   countoddmembers [1;0;3;1;4;5] = 4.
-  reflexivity. Qed.
+  (* FILL IN HERE *) Admitted.
 
 Example test_countoddmembers2:
   countoddmembers [0;2;4] = 0.
-  reflexivity. Qed.
+  (* FILL IN HERE *) Admitted.
 
 Example test_countoddmembers3:
   countoddmembers nil = 0.
-  reflexivity. Qed.
+  (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 3 stars, advanced (alternate) 
+(** **** Exercise: 3 stars, advanced (alternate)
 
     Complete the following definition of [alternate], which
     interleaves two lists into one, alternating between elements taken
     from the first list and elements from the second.  See the tests
     below for more specific examples.
 
-    (Note: one natural and elegant way of writing [alternate] will
-    fail to satisfy Coq's requirement that all [Fixpoint] definitions
-    be "obviously terminating."  If you find yourself in this rut,
-    look for a slightly more verbose solution that considers elements
-    of both lists at the same time.  One possible solution involves
-    defining a new kind of pairs, but this is not the only way.)  *)
+    Hint: there are natural ways of writing [alternate] that fail to
+    satisfy Coq's requirement that all [Fixpoint] definitions be
+    _structurally recursive_, as mentioned in [Basics]. If you
+    encounter this difficulty, consider pattern matching against both
+    lists at the same time with the "multiple pattern" syntax we've
+    seen before. *)
 
 Fixpoint alternate (l1 l2 : natlist) : natlist
   (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
@@ -376,44 +366,35 @@ Example test_alternate4:
 (** *** Bags via Lists *)
 
 (** A [bag] (or [multiset]) is like a set, except that each element
-    can appear multiple times rather than just once.  One possible
-    representation for a bag of numbers is as a list. *)
+    can appear multiple times rather than just once.  One way of
+    representating a bag of numbers is as a list. *)
 
 Definition bag := natlist.
 
-(** **** Exercise: 3 stars, standard, especially useful (bag_functions) 
+(** **** Exercise: 3 stars, standard, especially useful (bag_functions)
 
-    Complete the following definitions for the functions
-    [count], [sum], [add], and [member] for bags. *)
+    Complete the following definitions for the functions [count],
+    [sum], [add], and [member] for bags. *)
 
-Fixpoint count (v:nat) (s:bag) : nat :=
-  match s with
-  | nil => O
-  | h :: t => 
-    match h =? v with
-    | true => S (count v t) 
-    | false => count v t 
-    end
-  end.
+Fixpoint count (v : nat) (s : bag) : nat
+  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
 
-(** All these proofs can be done just by [reflexivity]. *)
+(** All these proofs can be completed with [reflexivity]. *)
 
 Example test_count1:              count 1 [1;2;3;1;4;1] = 3.
-  reflexivity. Qed.
+ (* FILL IN HERE *) Admitted.
 Example test_count2:              count 6 [1;2;3;1;4;1] = 0.
-reflexivity. Qed.
+ (* FILL IN HERE *) Admitted.
 
 (** Multiset [sum] is similar to set [union]: [sum a b] contains all
-    the elements of [a] and of [b].  (Mathematicians usually define
-    [union] on multisets a little bit differently -- using max instead
-    of sum -- which is why we don't call this operation [union].)  For
-    [sum], we're giving you a header that does not give explicit names
-    to the arguments.  Moreover, it uses the keyword [Definition]
-    instead of [Fixpoint], so even if you had names for the arguments,
-    you wouldn't be able to process them recursively.  The point of
-    stating the question this way is to encourage you to think about
-    whether [sum] can be implemented in another way -- perhaps by
-    using one or more functions that have already been defined.  *)
+    the elements of [a] and those of [b].  (Mathematicians usually
+    define [union] on multisets a little bit differently -- using max
+    instead of sum -- which is why we don't call this operation
+    [union].)
+
+    We've deliberately given you a header that does not give explicit
+    names to the arguments.  Implement [sum] in terms of an
+    already-defined function, without changing the header. *)
 
 Definition sum : bag -> bag -> bag
   (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
@@ -421,7 +402,7 @@ Definition sum : bag -> bag -> bag
 Example test_sum1:              count 1 (sum [1;2;3] [1;4;1]) = 3.
  (* FILL IN HERE *) Admitted.
 
-Definition add (v:nat) (s:bag) : bag
+Definition add (v : nat) (s : bag) : bag
   (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
 
 Example test_add1:                count 1 (add 1 [1;4;1]) = 3.
@@ -429,7 +410,7 @@ Example test_add1:                count 1 (add 1 [1;4;1]) = 3.
 Example test_add2:                count 5 (add 1 [1;4;1]) = 0.
  (* FILL IN HERE *) Admitted.
 
-Definition member (v:nat) (s:bag) : bool
+Fixpoint member (v : nat) (s : bag) : bool
   (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
 
 Example test_member1:             member 1 [1;4;1] = true.
@@ -439,7 +420,7 @@ Example test_member2:             member 2 [1;4;1] = false.
 (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 3 stars, standard, optional (bag_more_functions) 
+(** **** Exercise: 3 stars, standard, optional (bag_more_functions)
 
     Here are some more [bag] functions for you to practice with. *)
 
@@ -449,7 +430,7 @@ Example test_member2:             member 2 [1;4;1] = false.
     to fill in the definition of [remove_one] for a later
     exercise.) *)
 
-Fixpoint remove_one (v:nat) (s:bag) : bag
+Fixpoint remove_one (v : nat) (s : bag) : bag
   (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
 
 Example test_remove_one1:
@@ -480,22 +461,25 @@ Example test_remove_all3:  count 4 (remove_all 5 [2;1;4;5;1;4]) = 2.
 Example test_remove_all4:  count 5 (remove_all 5 [2;1;5;4;5;1;4;5;1;4]) = 0.
  (* FILL IN HERE *) Admitted.
 
-Fixpoint subset (s1:bag) (s2:bag) : bool
+Fixpoint included (s1 : bag) (s2 : bag) : bool
   (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
 
-Example test_subset1:              subset [1;2] [2;1;4;1] = true.
+Example test_included1:              included [1;2] [2;1;4;1] = true.
  (* FILL IN HERE *) Admitted.
-Example test_subset2:              subset [1;2;2] [2;1;4;1] = false.
+Example test_included2:              included [1;2;2] [2;1;4;1] = false.
  (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, especially useful (add_inc_count) 
+(** **** Exercise: 2 stars, standard, especially useful (add_inc_count)
 
     Adding a value to a bag should increase the value's count by one.
-    State that as a theorem and prove it. *)
-(* Theorem  : ...
-
-Qed. *)
+    State this as a theorem and prove it in Coq. *)
+(*
+Theorem add_inc_count : ...
+Proof.
+  ...
+Qed.
+*)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_add_inc_count : option (nat*string) := None.
@@ -506,10 +490,10 @@ Definition manual_grade_for_add_inc_count : option (nat*string) := None.
 
 (** As with numbers, simple facts about list-processing
     functions can sometimes be proved entirely by simplification.  For
-    example, just the simplification performed by [reflexivity] is
-    enough for this theorem... *)
+    example, the simplification performed by [reflexivity] is enough
+    for this theorem... *)
 
-Theorem nil_app : forall l:natlist,
+Theorem nil_app : forall l : natlist,
   [] ++ l = l.
 Proof. reflexivity. Qed.
 
@@ -541,8 +525,8 @@ Proof.
     induction for their proofs.  We'll see how to do this next. *)
 
 (** (Micro-Sermon: As we get deeper into this material, simply
-    _reading_ proof scripts will not get you very far!  It is
-    important to step through the details of each one using Coq and
+    _reading_ proof scripts will not help you very much.  Rather, it
+    is important to step through the details of each one using Coq and
     think about what each step achieves.  Otherwise it is more or less
     guaranteed that the exercises will make no sense when you get to
     them.  'Nuff said.) *)
@@ -555,17 +539,17 @@ Proof.
     the idea is equally simple.  Each [Inductive] declaration defines
     a set of data values that can be built up using the declared
     constructors.  For example, a boolean can be either [true] or
-    [false]; a number can be either [O] or [S] applied to another
-    number; and a list can be either [nil] or [cons] applied to a
-    number and a list.   Moreover, applications of the declared
-    constructors to one another are the _only_ possible shapes
-    that elements of an inductively defined set can have.
+    [false]; a number can be either [O] or else [S] applied to another
+    number; and a list can be either [nil] or else [cons] applied to a
+    number and a list.  Moreover, applications of the declared
+    constructors to one another are the _only_ possible shapes that
+    elements of an inductively defined set can have.
 
     This last fact directly gives rise to a way of reasoning about
     inductively defined sets: a number is either [O] or else it is [S]
     applied to some _smaller_ number; a list is either [nil] or else
     it is [cons] applied to some number and some _smaller_ list;
-    etc. So, if we have in mind some proposition [P] that mentions a
+    etc.  Thus, if we have in mind some proposition [P] that mentions a
     list [l] and we want to argue that [P] holds for _all_ lists, we
     can reason as follows:
 
@@ -577,7 +561,9 @@ Proof.
 
     Since larger lists can always be broken down into smaller ones,
     eventually reaching [nil], these two arguments together establish
-    the truth of [P] for all lists [l].  Here's a concrete example: *)
+    the truth of [P] for all lists [l].
+
+    Here's a concrete example: *)
 
 Theorem app_assoc : forall l1 l2 l3 : natlist,
   (l1 ++ l2) ++ l3 = l1 ++ (l2 ++ l3).
@@ -588,25 +574,25 @@ Proof.
   - (* l1 = cons n l1' *)
     simpl. rewrite -> IHl1'. reflexivity.  Qed.
 
-(** Notice that, as when doing induction on natural numbers, the
-    [as...] clause provided to the [induction] tactic gives a name to
-    the induction hypothesis corresponding to the smaller list [l1']
-    in the [cons] case.
+(** Notice that, as we saw with induction on natural numbers,
+    the [as...] clause provided to the [induction] tactic gives a name
+    to the induction hypothesis corresponding to the smaller list
+    [l1'] in the [cons] case.
 
     Once again, this Coq proof is not especially illuminating as a
     static document -- it is easy to see what's going on if you are
     reading the proof in an interactive Coq session and you can see
     the current goal and context at each point, but this state is not
     visible in the written-down parts of the Coq proof.  So a
-    natural-language proof -- one written for human readers -- will
-    need to include more explicit signposts; in particular, it will
-    help the reader stay oriented if we remind them exactly what the
-    induction hypothesis is in the second case. *)
+    natural-language proof -- one written for human readers -- should
+    include more explicit signposts; in particular, it will help the
+    reader stay oriented if we remind them exactly what the induction
+    hypothesis is in the second case. *)
 
 (** For comparison, here is an informal proof of the same theorem. *)
 
 (** _Theorem_: For all lists [l1], [l2], and [l3],
-   [(l1 ++ l2) ++ l3 = l1 ++ (l2 ++ l3)].
+               [(l1 ++ l2) ++ l3 = l1 ++ (l2 ++ l3)].
 
    _Proof_: By induction on [l1].
 
@@ -634,8 +620,8 @@ Proof.
 (** *** Reversing a List *)
 
 (** For a slightly more involved example of inductive proof over
-    lists, suppose we use [app] to define a list-reversing
-    function [rev]: *)
+    lists, suppose we use [app] to define a list-reversing function
+    [rev]: *)
 
 Fixpoint rev (l:natlist) : natlist :=
   match l with
@@ -648,10 +634,9 @@ Proof. reflexivity.  Qed.
 Example test_rev2:            rev nil = nil.
 Proof. reflexivity.  Qed.
 
-(** For something a bit more challenging than the proofs
-    we've seen so far, let's prove that reversing a list does not
-    change its length.  Our first attempt gets stuck in the successor
-    case... *)
+(** For something a bit more challenging, let's prove that
+    reversing a list does not change its length.  Our first attempt
+    gets stuck in the successor case... *)
 
 Theorem rev_length_firsttry : forall l : natlist,
   length (rev l) = length l.
@@ -688,10 +673,9 @@ Proof.
 
 (** Note that, to make the lemma as general as possible, we
     quantify over _all_ [natlist]s, not just those that result from an
-    application of [rev].  This should seem natural, because the truth
-    of the goal clearly doesn't depend on the list having been
-    reversed.  Moreover, it is easier to prove the more general
-    property. *)
+    application of [rev].  This seems natural, because the truth of
+    the goal clearly doesn't depend on the list having been reversed.
+    Moreover, it is easier to prove the more general property. *)
 
 (** Now we can complete the original proof. *)
 
@@ -703,7 +687,7 @@ Proof.
     reflexivity.
   - (* l = cons *)
     simpl. rewrite -> app_length.
-    simpl. rewrite -> IHl'. rewrite plus_comm.
+    simpl. rewrite -> IHl'. rewrite add_comm.
     reflexivity.
 Qed.
 
@@ -718,8 +702,8 @@ Qed.
 
         length ([] ++ l2) = length [] + length l2,
 
-      which follows directly from the definitions of
-      [length], [++], and [plus].
+      which follows directly from the definitions of [length],
+      [++], and [plus].
 
     - Next, suppose [l1 = n::l1'], with
 
@@ -771,17 +755,17 @@ Qed.
 
 (** _Theorem_: For all lists [l], [length (rev l) = length l].
 
-    _Proof_: First, observe that [length (l ++ [n]) = S (length l)]
-     for any [l], by a straightforward induction on [l].  The main
-     property again follows by induction on [l], using the observation
-     together with the induction hypothesis in the case where [l =
-     n'::l']. [] *)
+    _Proof_: First observe, by a straightforward induction on [l],
+     that [length (l ++ [n]) = S (length l)] for any [l].  The main
+     property then follows by another induction on [l], using the
+     observation together with the induction hypothesis in the case
+     where [l = n'::l']. [] *)
 
 (** Which style is preferable in a given situation depends on
     the sophistication of the expected audience and how similar the
     proof at hand is to ones that they will already be familiar with.
-    The more pedantic style is a good default for our present
-    purposes. *)
+    The more pedantic style is a good default for our present purposes
+    because we're trying to be ultra-clear about the details. *)
 
 (* ================================================================= *)
 (** ** [Search] *)
@@ -792,10 +776,11 @@ Qed.
     to remember what theorems have been proven, much less what they
     are called.
 
-    Coq's [Search] command is quite helpful with this.  Let's say
-    you've forgotten the name of a theorem about [rev].  The command
-    [Search rev] will cause Coq to display a list of all theorems
-    involving [rev]. *)
+    Coq's [Search] command is quite helpful with this.
+
+    Let's say you've forgotten the name of a theorem about [rev].  The
+    command [Search rev] will cause Coq to display a list of all
+    theorems involving [rev]. *)
 
 Search rev.
 
@@ -816,48 +801,36 @@ Search (_ + _ = _ + _) inside Induction.
 
 Search (?x + ?y = ?y + ?x).
 
-(** The question mark in front of the variable is needed to indicate
-    that it is a variable in the search pattern, rather than a
-    variable that is expected to be in scope currently. *)
+(** (The question mark in front of the variable is needed to indicate
+    that it is a variable in the search pattern, rather than a defined
+    identifier that is expected to be in scope currently.) *)
 
 (** Keep [Search] in mind as you do the following exercises and
-    throughout the rest of the book; it can save you a lot of time!
-
-    Your IDE likely has its own functionality to help with searching.
-    For example, in ProofGeneral, you can run [Search] with [C-c C-a
-    C-a], and paste its response into your buffer with [C-c C-;]. *)
+    throughout the rest of the book; it can save you a lot of time! *)
 
 (* ================================================================= *)
 (** ** List Exercises, Part 1 *)
 
-(** **** Exercise: 3 stars, standard (list_exercises) 
+(** **** Exercise: 3 stars, standard (list_exercises)
 
     More practice with lists: *)
 
 Theorem app_nil_r : forall l : natlist,
   l ++ [] = l.
 Proof.
-  induction l as [| n l' IHl'].
-  - reflexivity.
-  - simpl. rewrite -> IHl'. reflexivity.
-Qed.
+  (* FILL IN HERE *) Admitted.
 
 Theorem rev_app_distr: forall l1 l2 : natlist,
   rev (l1 ++ l2) = rev l2 ++ rev l1.
 Proof.
-  intros l1 l2. 
-  induction l1 as [| n1 l1' IHl1'].
-  - simpl. rewrite -> app_nil_r. reflexivity.
-  - simpl. rewrite -> IHl1'. rewrite -> app_assoc. reflexivity.
-Qed.
+  (* FILL IN HERE *) Admitted.
 
+(** An _involution_ is a function that is its own inverse. That is,
+    applying the function twice yield the original input. *)
 Theorem rev_involutive : forall l : natlist,
   rev (rev l) = l.
 Proof.
-  induction l as [| n l' IHl'].
-  - simpl. reflexivity.
-  - simpl. rewrite -> rev_app_distr. simpl. rewrite -> IHl'. reflexivity.
-Qed.
+  (* FILL IN HERE *) Admitted.
 
 (** There is a short solution to the next one.  If you find yourself
     getting tangled up, step back and try to look for a simpler
@@ -866,43 +839,28 @@ Qed.
 Theorem app_assoc4 : forall l1 l2 l3 l4 : natlist,
   l1 ++ (l2 ++ (l3 ++ l4)) = ((l1 ++ l2) ++ l3) ++ l4.
 Proof.
-  intros l1 l2 l3 l4.
-  rewrite -> app_assoc. rewrite -> app_assoc. reflexivity. Qed.
+  (* FILL IN HERE *) Admitted.
 
 (** An exercise about your implementation of [nonzeros]: *)
 
 Lemma nonzeros_app : forall l1 l2 : natlist,
   nonzeros (l1 ++ l2) = (nonzeros l1) ++ (nonzeros l2).
 Proof.
-  intros l1 l2.
-  induction l1 as [| n1 l1' IHl1'].
-  - simpl. reflexivity.
-  - simpl. rewrite -> IHl1'. destruct n1 as [| n].
-    + reflexivity.
-    + simpl. reflexivity.
-  Qed. 
-
+  (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard (eqblist) 
+(** **** Exercise: 2 stars, standard (eqblist)
 
     Fill in the definition of [eqblist], which compares
     lists of numbers for equality.  Prove that [eqblist l l]
     yields [true] for every list [l]. *)
 
-Fixpoint eqblist (l1 l2 : natlist) : bool :=
-  match l1, l2 with
-  | nil, nil => true
-  | h1 :: t1, h2 :: t2 => 
-    (h1 =? h2) && (eqblist t1 t2)
-  | _, _ => false
-  end.
+Fixpoint eqblist (l1 l2 : natlist) : bool
+  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
 
 Example test_eqblist1 :
   (eqblist nil nil = true).
-Proof.
-  reflexivity.
-Qed.
+ (* FILL IN HERE *) Admitted.
 
 Example test_eqblist2 :
   eqblist [1;2;3] [1;2;3] = true.
@@ -915,16 +873,8 @@ Example test_eqblist3 :
 Theorem eqblist_refl : forall l:natlist,
   true = eqblist l l.
 Proof.
-  induction l as [| n l' IHl'].
-  - simpl. reflexivity.
-  - simpl. rewrite <- IHl'. 
-    assert (H: forall m: nat, true = (m =? m)).  
-    {induction m as [| m' IHm]. 
-    + reflexivity. 
-    + simpl. rewrite <- IHm. reflexivity.
-    }
-    rewrite <- H. reflexivity. Qed.
-  (** [] *)
+  (* FILL IN HERE *) Admitted.
+(** [] *)
 
 (* ================================================================= *)
 (** ** List Exercises, Part 2 *)
@@ -932,17 +882,15 @@ Proof.
 (** Here are a couple of little theorems to prove about your
     definitions about bags above. *)
 
-(** **** Exercise: 1 star, standard (count_member_nonzero)  *)
+(** **** Exercise: 1 star, standard (count_member_nonzero) *)
 Theorem count_member_nonzero : forall (s : bag),
   1 <=? (count 1 (1 :: s)) = true.
 Proof.
-  induction s as [| n l' IHl'].
-  - simpl. reflexivity.
-  - simpl. reflexivity.
-Qed.  
+  (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** The following lemma about [leb] might help you in the next exercise. *)
+(** The following lemma about [leb] might help you in the next
+    exercise (it will also be useful in later chapters). *)
 
 Theorem leb_n_Sn : forall n,
   n <=? (S n) = true.
@@ -955,30 +903,50 @@ Proof.
 
 (** Before doing the next exercise, make sure you've filled in the
    definition of [remove_one] above. *)
-(** **** Exercise: 3 stars, advanced (remove_does_not_increase_count)  *)
+(** **** Exercise: 3 stars, advanced (remove_does_not_increase_count) *)
 Theorem remove_does_not_increase_count: forall (s : bag),
   (count 0 (remove_one 0 s)) <=? (count 0 s) = true.
 Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 3 stars, standard, optional (bag_count_sum) 
+(** **** Exercise: 3 stars, standard, optional (bag_count_sum)
 
     Write down an interesting theorem [bag_count_sum] about bags
     involving the functions [count] and [sum], and prove it using
     Coq.  (You may find that the difficulty of the proof depends on
-    how you defined [count]!) *)
+    how you defined [count]!  Hint: If you defined [count] using
+    [=?] you may find it useful to know that [destruct] works on
+    arbitrary expressions, not just simple identifiers.)
+*)
 (* FILL IN HERE
 
     [] *)
 
-(** **** Exercise: 4 stars, advanced (rev_injective) 
+(** **** Exercise: 3 stars, advanced (involution_injective) *)
 
-    Prove that the [rev] function is injective. There is a hard way
-    and an easy way to do this. *)
+(** Prove that every involution is injective.
+
+    Involutions were defined above in [rev_involutive]. An _injective_
+    function is one-to-one: it maps distinct inputs to distinct
+    outputs, without any collisions. *)
+
+Theorem involution_injective : forall (f : nat -> nat),
+    (forall n : nat, n = f (f n)) -> (forall n1 n2 : nat, f n1 = f n2 -> n1 = n2).
+Proof.
+  (* FILL IN HERE *) Admitted.
+
+(** [] *)
+
+(** **** Exercise: 2 stars, advanced (rev_injective)
+
+    Prove that [rev] is injective. Do not prove this by induction --
+    that would be hard. Instead, re-use the same proof technique that
+    you used for [involution_injective]. (But: Don't try to use that
+    exercise directly as a lemma: the types are not the same!) *)
 
 Theorem rev_injective : forall (l1 l2 : natlist),
-    rev l1 = rev l2 -> l1 = l2.
+  rev l1 = rev l2 -> l1 = l2.
 Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
@@ -1010,11 +978,17 @@ Inductive natoption : Type :=
   | Some (n : nat)
   | None.
 
+(* Note that we've capitalized the constructor names [None] and
+   [Some], following their definition in Coq's standard library.  In
+   general, constructor (and variable) names can begin with either
+   capital or lowercase letters. *)
+
 (** We can then change the above definition of [nth_bad] to
     return [None] when the list is too short and [Some a] when the
     list has enough members and [a] appears at position [n]. We call
     this new function [nth_error] to indicate that it may result in an
-    error. *)
+    error. As we see here, constructors of inductive definitions can
+    be capitalized. *)
 
 Fixpoint nth_error (l:natlist) (n:nat) : natoption :=
   match l with
@@ -1033,26 +1007,8 @@ Example test_nth_error3 : nth_error [4;5;6;7] 9 = None.
 Proof. reflexivity. Qed.
 
 (** (In the HTML version, the boilerplate proofs of these
-    examples are elided.  Click on a box if you want to see one.)
-
-    This example is also an opportunity to introduce one more small
-    feature of Coq's programming language: conditional
-    expressions... *)
-
-Fixpoint nth_error' (l:natlist) (n:nat) : natoption :=
-  match l with
-  | nil => None
-  | a :: l' => if n =? O then Some a
-               else nth_error' l' (pred n)
-  end.
-
-(** Coq's conditionals are exactly like those found in any other
-    language, with one small generalization.  Since the [bool] type
-    is not built in, Coq actually supports conditional expressions over
-    _any_ inductively defined type with exactly two constructors.  The
-    guard is considered true if it evaluates to the first constructor
-    in the [Inductive] definition and false if it evaluates to the
-    second. *)
+    examples are elided.  Click on a box if you want to see the
+    details.) *)
 
 (** The function below pulls the [nat] out of a [natoption], returning
     a supplied default in the [None] case. *)
@@ -1063,19 +1019,16 @@ Definition option_elim (d : nat) (o : natoption) : nat :=
   | None => d
   end.
 
-(** **** Exercise: 2 stars, standard (hd_error) 
+(** **** Exercise: 2 stars, standard (hd_error)
 
     Using the same idea, fix the [hd] function from earlier so we don't
     have to pass a default element for the [nil] case.  *)
 
-Definition hd_error (l : natlist) : natoption :=
-  match l with
-  | nil => None
-  | h :: _ => Some h
-  end.
+Definition hd_error (l : natlist) : natoption
+  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
 
 Example test_hd_error1 : hd_error [] = None.
-  reflexivity. Qed.
+ (* FILL IN HERE *) Admitted.
 
 Example test_hd_error2 : hd_error [1] = Some 1.
  (* FILL IN HERE *) Admitted.
@@ -1085,18 +1038,14 @@ Example test_hd_error3 : hd_error [5;6] = Some 5.
 
 (** [] *)
 
-(** **** Exercise: 1 star, standard, optional (option_elim_hd) 
+(** **** Exercise: 1 star, standard, optional (option_elim_hd)
 
     This exercise relates your new [hd_error] to the old [hd]. *)
 
 Theorem option_elim_hd : forall (l:natlist) (default:nat),
   hd default l = option_elim default (hd_error l).
 Proof.
-  intros l d.
-  induction l as [| n l' IHl'].
-  - simpl. reflexivity.
-  - simpl. reflexivity. 
-Qed.
+  (* FILL IN HERE *) Admitted.
 (** [] *)
 
 End NatList.
@@ -1117,7 +1066,8 @@ Inductive id : Type :=
 
 (** Internally, an [id] is just a number.  Introducing a separate type
     by wrapping each nat with the tag [Id] makes definitions more
-    readable and gives us more flexibility. *)
+    readable and gives us flexibility to change representations later
+    if we want to. *)
 
 (** We'll also need an equality test for [id]s: *)
 
@@ -1126,17 +1076,17 @@ Definition eqb_id (x1 x2 : id) :=
   | Id n1, Id n2 => n1 =? n2
   end.
 
-(** **** Exercise: 1 star, standard (eqb_id_refl)  *)
-Theorem eqb_id_refl : forall x, true = eqb_id x x.
+(** **** Exercise: 1 star, standard (eqb_id_refl) *)
+Theorem eqb_id_refl : forall x, eqb_id x x = true.
 Proof.
-  intros x. destruct x. simpl. Admitted.
+  (* FILL IN HERE *) Admitted.
 (** [] *)
 
 (** Now we define the type of partial maps: *)
 
 Module PartialMap.
-Export NatList.
-  
+Export NatList.  (* make the definitions from NatList available here *)
+
 Inductive partial_map : Type :=
   | empty
   | record (i : id) (v : nat) (m : partial_map).
@@ -1170,41 +1120,21 @@ Fixpoint find (x : id) (d : partial_map) : natoption :=
                      else find x d'
   end.
 
-(** **** Exercise: 1 star, standard (update_eq)  *)
+(** **** Exercise: 1 star, standard (update_eq) *)
 Theorem update_eq :
   forall (d : partial_map) (x : id) (v: nat),
     find x (update d x v) = Some v.
 Proof.
-  intros d x v.
-  simpl. rewrite <- eqb_id_refl. reflexivity. Qed.
-
+ (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 1 star, standard (update_neq)  *)
+(** **** Exercise: 1 star, standard (update_neq) *)
 Theorem update_neq :
   forall (d : partial_map) (x y : id) (o: nat),
     eqb_id x y = false -> find x (update d y o) = find x d.
 Proof.
-  intros d x y o H.
-  simpl. rewrite -> H. reflexivity. Qed.
+ (* FILL IN HERE *) Admitted.
 (** [] *)
 End PartialMap.
 
-(** **** Exercise: 2 stars, standard, optional (baz_num_elts) 
-
-    Consider the following inductive definition: *)
-
-Inductive baz : Type :=
-  | Baz1 (x : baz)
-  | Baz2 (y : baz) (b : bool).
-
-(** How _many_ elements does the type [baz] have? (Explain in words,
-    in a comment.) *)
-
-(* FILL IN HERE *)
-
-(* Do not modify the following line: *)
-Definition manual_grade_for_baz_num_elts : option (nat*string) := None.
-(** [] *)
-
-(* 2020-08-17 13:38 *)
+(* 2023-10-03 16:40 *)

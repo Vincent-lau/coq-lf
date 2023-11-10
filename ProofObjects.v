@@ -1,10 +1,10 @@
 (** * ProofObjects: The Curry-Howard Correspondence *)
 
-Set Warnings "-notation-overridden,-parsing".
+Set Warnings "-notation-overridden,-parsing,-deprecated-hint-without-locality".
 From LF Require Export IndProp.
 
-(** "_Algorithms are the computational content of proofs_."
-    --Robert Harper *)
+(** "Algorithms are the computational content of proofs."
+    (Robert Harper) *)
 
 (** We have seen that Coq has mechanisms both for _programming_,
     using inductive data types like [nat] or [list] and functions over
@@ -37,12 +37,9 @@ From LF Require Export IndProp.
 
 (** Look again at the formal definition of the [ev] property.  *)
 
-Print ev.
-(* ==>
-  Inductive ev : nat -> Prop :=
-    | ev_0 : ev 0
-    | ev_SS : forall n, ev n -> ev (S (S n)).
-*)
+Inductive ev : nat -> Prop :=
+  | ev_0                       : ev 0
+  | ev_SS (n : nat) (H : ev n) : ev (S (S n)).
 
 (** Suppose we introduce an alternative pronunciation of "[:]".
     Instead of "has type," we can say "is a proof of."  For example,
@@ -86,9 +83,9 @@ Proof.
 
 Print ev_4.
 (* ===> ev_4 = ev_SS 2 (ev_SS 0 ev_0)
-     : ev 4  *)
+      : ev 4  *)
 
-(** Indeed, we can also write down this proof object _directly_,
+(** Indeed, we can also write down this proof object directly,
     without the need for a separate proof script: *)
 
 Check (ev_SS 2 (ev_SS 0 ev_0))
@@ -151,11 +148,10 @@ Qed.
     evidence we've built is stored in the global context under the name
     given in the [Theorem] command. *)
 
-(** Tactic proofs are useful and convenient, but they are not
-    essential: in principle, we can always construct the required
-    evidence by hand, as shown above. Then we can use [Definition]
-    (rather than [Theorem]) to give a global name directly to this
-    evidence. *)
+(** Tactic proofs are convenient, but they are not essential in Coq:
+    in principle, we can always just construct the required evidence
+    by hand. Then we can use [Definition] (rather than [Theorem]) to
+    introduce a global name for this evidence. *)
 
 Definition ev_4''' : ev 4 :=
   ev_SS 2 (ev_SS 0 ev_0).
@@ -172,7 +168,7 @@ Print ev_4''.
 Print ev_4'''.
 (* ===> ev_4''' =   ev_SS 2 (ev_SS 0 ev_0) : ev 4 *)
 
-(** **** Exercise: 2 stars, standard (eight_is_even) 
+(** **** Exercise: 2 stars, standard (eight_is_even)
 
     Give a tactic proof and a proof object showing that [ev 8]. *)
 
@@ -242,10 +238,10 @@ Check ev_plus4''
     argument's type, [ev n], mentions the _value_ of the first
     argument, [n].
 
-    While such _dependent types_ are not found in conventional
-    programming languages, they can be useful in programming too, as
-    the recent flurry of activity in the functional programming
-    community demonstrates. *)
+    While such _dependent types_ are not found in most mainstream
+    programming languages, they can be quite useful in programming
+    too, as the flurry of activity in the functional programming
+    community over the past couple of decades demonstrates. *)
 
 (** Notice that both implication ([->]) and quantification ([forall])
     correspond to functions on evidence.  In fact, they are really the
@@ -255,7 +251,7 @@ Check ev_plus4''
 
            forall (x:nat), nat
         =  forall (_:nat), nat
-        =  nat -> nat
+        =  nat          -> nat
 *)
 
 (** For example, consider this proposition: *)
@@ -286,7 +282,9 @@ Definition ev_plus2'' : Prop :=
 
 (** If we can build proofs by giving explicit terms rather than
     executing tactic scripts, you may be wondering whether we can
-    build _programs_ using _tactics_ rather than explicit terms.
+    build _programs_ using tactics rather than by writing down
+    explicit terms.
+
     Naturally, the answer is yes! *)
 
 Definition add1 : nat -> nat.
@@ -305,7 +303,7 @@ Print add1.
 Compute add1 2.
 (* ==> 3 : nat *)
 
-(** Notice that we terminate the [Definition] with a [.] rather than
+(** Notice that we terminated the [Definition] with a [.] rather than
     with [:=] followed by a term.  This tells Coq to enter _proof
     scripting mode_ to build an object of type [nat -> nat].  Also, we
     terminate the proof with [Defined] rather than [Qed]; this makes
@@ -324,8 +322,9 @@ Compute add1 2.
 (** Inductive definitions are powerful enough to express most of the
     connectives we have seen so far.  Indeed, only universal
     quantification (with implication as a special case) is built into
-    Coq; all the others are defined inductively.  We'll see these
-    definitions in this section. *)
+    Coq; all the others are defined inductively.
+
+    Let's see how. *)
 
 Module Props.
 
@@ -333,14 +332,14 @@ Module Props.
 (** ** Conjunction *)
 
 (** To prove that [P /\ Q] holds, we must present evidence for both
-    [P] and [Q].  Thus, it makes sense to define a proof object for [P
-    /\ Q] as consisting of a pair of two proofs: one for [P] and
+    [P] and [Q].  Thus, it makes sense to define a proof object for
+    [P /\ Q] to consist of a pair of two proofs: one for [P] and
     another one for [Q]. This leads to the following definition. *)
 
 Module And.
 
 Inductive and (P Q : Prop) : Prop :=
-| conj : P -> Q -> and P Q.
+  | conj : P -> Q -> and P Q.
 
 Arguments conj [P] [Q].
 
@@ -361,7 +360,7 @@ Print prod.
     proved -- here just one (the [conj] constructor). *)
 
 Theorem proj1' : forall P Q,
-    P /\ Q -> P.
+  P /\ Q -> P.
 Proof.
   intros P Q HPQ. destruct HPQ as [HP HQ]. apply HP.
   Show Proof.
@@ -423,8 +422,8 @@ Check conj_fact.
 Module Or.
 
 Inductive or (P Q : Prop) : Prop :=
-| or_introl : P -> or P Q
-| or_intror : Q -> or P Q.
+  | or_introl : P -> or P Q
+  | or_intror : Q -> or P Q.
 
 Arguments or_introl [P] [Q].
 Arguments or_intror [P] [Q].
@@ -433,9 +432,9 @@ Notation "P \/ Q" := (or P Q) : type_scope.
 
 (** This declaration explains the behavior of the [destruct] tactic on
     a disjunctive hypothesis, since the generated subgoals match the
-    shape of the [or_introl] and [or_intror] constructors.
+    shape of the [or_introl] and [or_intror] constructors. *)
 
-    Once again, we can also directly write proof objects for theorems
+(** Once again, we can also directly write proof objects for theorems
     involving [or], without resorting to tactics. *)
 
 Definition inj_l : forall (P Q : Prop), P -> P \/ Q :=
@@ -463,7 +462,7 @@ Qed.
 
 End Or.
 
-(** **** Exercise: 2 stars, standard (or_commut') 
+(** **** Exercise: 2 stars, standard (or_commut')
 
     Construct a proof object for the following proposition. *)
 
@@ -486,7 +485,7 @@ Definition or_commut' : forall P Q, P \/ Q -> Q \/ P :=
 Module Ex.
 
 Inductive ex {A : Type} (P : A -> Prop) : Prop :=
-| ex_intro : forall x : A, P x -> ex P.
+  | ex_intro : forall x : A, P x -> ex P.
 
 Notation "'exists' x , p" :=
   (ex (fun x => p))
@@ -494,14 +493,14 @@ Notation "'exists' x , p" :=
 
 End Ex.
 
-(** This may benefit from a little unpacking.  The core definition is
+(** This probably needs a little unpacking.  The core definition is
     for a type former [ex] that can be used to build propositions of
     the form [ex P], where [P] itself is a _function_ from witness
     values in the type [A] to propositions.  The [ex_intro]
     constructor then offers a way of constructing evidence for [ex P],
     given a witness [x] and a proof of [P x].
 
-    The notation in the standard library is a slight variant of
+    The notation in the standard library is a slight extension of
     the above, enabling syntactic forms such as [exists x y, P x y]. *)
 
 (** The more familiar form [exists x, P x] desugars to an expression
@@ -514,7 +513,7 @@ Check ex (fun n => ev n) : Prop.
 Definition some_nat_is_even : exists n, ev n :=
   ex_intro ev 4 (ev_SS 2 (ev_SS 0 ev_0)).
 
-(** **** Exercise: 2 stars, standard (ex_ev_Sn) 
+(** **** Exercise: 2 stars, standard (ex_ev_Sn)
 
     Construct a proof object for the following proposition. *)
 
@@ -533,7 +532,7 @@ Inductive True : Prop :=
 (** It has one constructor (so every proof of [True] is the same, so
     being given a proof of [True] is not informative.) *)
 
-(** **** Exercise: 1 star, standard (p_implies_true) 
+(** **** Exercise: 1 star, standard (p_implies_true)
 
     Construct a proof object for the following proposition. *)
 
@@ -550,9 +549,10 @@ Inductive False : Prop := .
 (** That is, [False] is an inductive type with _no_ constructors --
     i.e., no way to build evidence for it. For example, there is
     no way to complete the following definition such that it
-    succeeds (rather than fails). *)
+    succeeds. *)
 
-Fail Definition contra : False :=
+Fail
+  Definition contra : False :=
   0 = 1.
 
 (** But it is possible to destruct [False] by pattern matching. There can
@@ -565,11 +565,11 @@ Definition false_implies_zero_eq_one : False -> 0 = 1 :=
 
 (** Since there are no branches to evaluate, the [match] expression
     can be considered to have any type we want, including [0 = 1].
-    Indeed, it's impossible to ever cause the [match] to be evaluated,
-    because we can never construct a value of type [False] to pass to
-    the function. *)
+    Fortunately, it's impossible to ever cause the [match] to be
+    evaluated, because we can never construct a value of type [False]
+    to pass to the function. *)
 
-(** **** Exercise: 1 star, standard (ex_falso_quodlibet') 
+(** **** Exercise: 1 star, standard (ex_falso_quodlibet')
 
     Construct a proof object for the following proposition. *)
 
@@ -585,10 +585,10 @@ End Props.
 (** Even Coq's equality relation is not built in.  We can define
     it ourselves: *)
 
-Module MyEquality.
+Module EqualityPlayground.
 
 Inductive eq {X:Type} : X -> X -> Prop :=
-| eq_refl : forall x, eq x x.
+  | eq_refl : forall x, eq x x.
 
 Notation "x == y" := (eq x y)
                        (at level 70, no associativity)
@@ -638,14 +638,54 @@ Definition four' : 2 + 2 == 1 + 3 :=
 Definition singleton : forall (X:Type) (x:X), []++[x] == x::[]  :=
   fun (X:Type) (x:X) => eq_refl [x].
 
-(** **** Exercise: 2 stars, standard (equality__leibniz_equality) 
+(** By pattern-matching against [n1 == n2], we obtain a term [n]
+    that is known to be convertible to both [n1] and [n2]. The term
+    [eq_refl (S n)] establishes [(S n) == (S n)]. The first [n] can be
+    converted to [n1], and the second to [n2], which yields [(S n1) ==
+    (S n2)]. Coq handles all that conversion for us. *)
+
+Definition eq_add : forall (n1 n2 : nat), n1 == n2 -> (S n1) == (S n2) :=
+  fun n1 n2 Heq =>
+    match Heq with
+    | eq_refl n => eq_refl (S n)
+    end.
+
+(** A tactic-based proof runs into some difficulties if we try to use
+    our usual repertoire of tactics, such as [rewrite] and
+    [reflexivity]. Those work with *setoid* relations that Coq knows
+    about, such as [=], but not our [==]. We could prove to Coq that
+    [==] is a setoid, but a simpler way is to use [destruct] and
+    [apply] instead. *)
+
+Theorem eq_add' : forall (n1 n2 : nat), n1 == n2 -> (S n1) == (S n2).
+Proof.
+  intros n1 n2 Heq.
+  Fail rewrite Heq.
+  destruct Heq.
+  Fail reflexivity.
+  apply eq_refl.
+Qed.
+
+(** **** Exercise: 2 stars, standard (eq_cons)
+
+    Construct the proof object for this theorem. Use pattern matching
+    against the equality hypotheses. *)
+
+Definition eq_cons : forall (X : Type) (h1 h2 : X) (t1 t2 : list X),
+    h1 == h2 -> t1 == t2 -> h1 :: t1 == h2 :: t2
+  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+
+(** [] *)
+
+(** **** Exercise: 2 stars, standard (equality__leibniz_equality)
 
     The inductive definition of equality implies _Leibniz equality_:
     what we mean when we say "[x] and [y] are equal" is that every
-    property on [P] that is true of [x] is also true of [y].  *)
+    property on [P] that is true of [x] is also true of [y]. Prove
+    that. *)
 
 Lemma equality__leibniz_equality : forall (X : Type) (x y: X),
-  x == y -> forall P:X->Prop, P x -> P y.
+  x == y -> forall (P : X -> Prop), P x -> P y.
 Proof.
   intros X x y H.
   intros P Px.
@@ -657,7 +697,18 @@ Qed.
 
 (** [] *)
 
-(** **** Exercise: 3 stars, standard, optional (leibniz_equality__equality) 
+(** **** Exercise: 2 stars, standard (equality__leibniz_equality_term)
+
+    Construct the proof object for the previous exercise.  All it
+    requires is anonymous functions and pattern-matching; the large
+    proof term constructed by tactics in the previous exercise is
+    needessly complicated. Hint: pattern-match as soon as possible. *)
+Definition equality__leibniz_equality_term : forall (X : Type) (x y: X),
+    x == y -> forall P : (X -> Prop), P x -> P y
+  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+(** [] *)
+
+(** **** Exercise: 3 stars, standard, optional (leibniz_equality__equality)
 
     Show that, in fact, the inductive definition of equality is
     _equivalent_ to Leibniz equality.  Hint: the proof is quite short;
@@ -668,10 +719,9 @@ Lemma leibniz_equality__equality : forall (X : Type) (x y: X),
   (forall P:X->Prop, P x -> P y) -> x == y.
 Proof.
 (* FILL IN HERE *) Admitted.
-
 (** [] *)
 
-End MyEquality.
+End EqualityPlayground.
 
 (* ================================================================= *)
 (** ** Inversion, Again *)
@@ -726,11 +776,11 @@ End MyEquality.
     context. *)
 
 (* ################################################################# *)
-(** * The Coq Trusted Computing Base *)
+(** * Coq's Trusted Computing Base *)
 
-(** One issue that arises with any automated proof assistant is
-    "why trust it?": what if there is a bug in the implementation that
-    renders all its reasoning suspect?
+(** One question that arises with any automated proof assistant
+    is "why should we trust it?" -- i.e., what if there is a bug in
+    the implementation that renders all its reasoning suspect?
 
     While it is impossible to allay such concerns completely, the fact
     that Coq is based on the Curry-Howard correspondence gives it a
@@ -776,6 +826,7 @@ Fail Definition or_bogus : forall P Q, P \/ Q -> P :=
 
 Fail Fixpoint infinite_loop {X : Type} (n : nat) {struct n} : X :=
   infinite_loop n.
+
 Fail Definition falso : False := infinite_loop 0.
 
 (** Recursive function [infinite_loop] purports to return a
@@ -793,4 +844,109 @@ Fail Definition falso : False := infinite_loop 0.
     validity from scratch.  Only theorems whose proofs pass the
     type-checker can be used in further proof developments.  *)
 
-(* 2020-08-19 13:58 *)
+(* ################################################################# *)
+(** * More Exercises *)
+
+(** Most of the following theorems were already proved with tactics in
+    [Logic].  Now construct the proof objects for them
+    directly. *)
+
+(** **** Exercise: 2 stars, standard (and_assoc) *)
+Definition and_assoc : forall P Q R : Prop,
+    P /\ (Q /\ R) -> (P /\ Q) /\ R
+  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+(** [] *)
+
+(** **** Exercise: 3 stars, standard (or_distributes_over_and) *)
+Definition or_distributes_over_and : forall P Q R : Prop,
+    P \/ (Q /\ R) <-> (P \/ Q) /\ (P \/ R)
+  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+(** [] *)
+
+(** **** Exercise: 3 stars, standard (negations) *)
+Definition double_neg : forall P : Prop,
+    P -> ~~P
+  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+
+Definition contradiction_implies_anything : forall P Q : Prop,
+    (P /\ ~P) -> Q
+  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+
+Definition de_morgan_not_or : forall P Q : Prop,
+    ~ (P \/ Q) -> ~P /\ ~Q
+  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+(** [] *)
+
+(** **** Exercise: 2 stars, standard (currying) *)
+Definition curry : forall P Q R : Prop,
+    ((P /\ Q) -> R) -> (P -> (Q -> R))
+  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+
+Definition uncurry : forall P Q R : Prop,
+    (P -> (Q -> R)) -> ((P /\ Q) -> R)
+  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+(** [] *)
+
+(* ################################################################# *)
+(** * Proof Irrelevance (Advanced) *)
+
+(** In [Logic] we saw that functional extensionality could be
+    added to Coq. A similar notion about propositions can also
+    be defined (and added as an axiom, if desired): *)
+
+Definition propositional_extensionality : Prop :=
+  forall (P Q : Prop), (P <-> Q) -> P = Q.
+
+(** Propositional extensionality asserts that if two propositions are
+    equivalent -- i.e., each implies the other -- then they are in
+    fact equal. The _proof objects_ for the propositions might be
+    syntactically different terms. But propositional extensionality
+    overlooks that, just as functional extensionality overlooks the
+    syntactic differences between functions. *)
+
+(** **** Exercise: 1 star, advanced (pe_implies_or_eq)
+
+    Prove the following consequence of propositional extensionality. *)
+
+Theorem pe_implies_or_eq :
+  propositional_extensionality ->
+  forall (P Q : Prop), (P \/ Q) = (Q \/ P).
+Proof.
+  (* FILL IN HERE *) Admitted.
+(** [] *)
+
+(** **** Exercise: 1 star, advanced (pe_implies_true_eq)
+
+    Prove that if a proposition [P] is provable, then it is equal to
+    [True] -- as a consequence of propositional extensionality. *)
+
+Lemma pe_implies_true_eq :
+  propositional_extensionality ->
+  forall (P : Prop), P -> True = P.
+Proof. (* FILL IN HERE *) Admitted.
+(** [] *)
+
+(** **** Exercise: 3 stars, advanced (pe_implies_pi)
+
+    Acknowledgment: this theorem and its proof technique are inspired
+    by Gert Smolka's manuscript Modeling and Proving in Computational
+    Type Theory Using the Coq Proof Assistant, 2021. *)
+
+(** Another, perhaps surprising, consequence of propositional
+    extensionality is that it implies _proof irrelevance_, which
+    asserts that all proof objects for a proposition are equal.*)
+
+Definition proof_irrelevance : Prop :=
+  forall (P : Prop) (pf1 pf2 : P), pf1 = pf2.
+
+(** Prove that fact. Use [pe_implies_true_eq] to establish that the
+    proposition [P] in [proof_irrelevance] is equal to [True]. Leverage
+    that equality to establish that both proof objects [pf1] and
+    [pf2] must be just [I]. *)
+
+Theorem pe_implies_pi :
+  propositional_extensionality -> proof_irrelevance.
+Proof. (* FILL IN HERE *) Admitted.
+(** [] *)
+
+(* 2023-10-03 16:40 *)

@@ -254,21 +254,35 @@
 (* ================================================================= *)
 (** ** System Requirements *)
 
-(** Coq runs on Windows, Linux, and macOS.  You will need:
+(** Coq runs on Windows, Linux, and macOS.  The files in this book
+    have been tested with Coq 8.17.
+
+    You will need:
 
     - A current installation of Coq, available from the Coq home page.
-      These files have been tested with Coq 8.12.
+      The "Coq Platform" usually offers the smoothest installation
+      experience.
 
-    - An IDE for interacting with Coq.  Currently, there are two
-      choices:
+      If you use the VSCode + Docker option described below, you don't
+      need to install Coq separately.
+
+    - An IDE for interacting with Coq.  There are several choices:
+
+        - The VSCoq extension for Visual Studio Code offers a simple
+          interface via a familiar IDE.  This option is the
+          recommended default.
+
+          VSCoq can be used as an ordinary IDE or it can be combined
+          with Docker (see below) for a lightweight installation
+          experience.
 
         - Proof General is an Emacs-based IDE.  It tends to be
           preferred by users who are already comfortable with Emacs.
           It requires a separate installation (google "Proof
           General").
 
-          Adventurous users of Coq within Emacs may want to check
-          out extensions such as [company-coq] and [control-lock].
+          Adventurous users of Coq within Emacs may want to check out
+          extensions such as [company-coq] and [control-lock].
 
         - CoqIDE is a simpler stand-alone IDE.  It is distributed with
           Coq, so it should be available once you have Coq installed.
@@ -277,11 +291,54 @@
           libraries and such.
 
           Users who like CoqIDE should consider running it with the
-          "asynchronous" and "error resilience" modes disabled:
+          "asynchronous" and "error resilience" modes disabled: [[
+          coqide -async-proofs off \
+          -async-proofs-command-error-resilience off Foo.v & ]] *)
 
-              coqide -async-proofs off \
-                     -async-proofs-command-error-resilience off Foo.v &
-*)
+(* ----------------------------------------------------------------- *)
+(** *** Using Coq with VSCode and Docker *)
+
+(** The Visual Studio Code IDE can cooperate with the Docker
+    virtualization platform to compile Coq scripts without the need
+    for any separate Coq installation.  To get things set up, follow
+    these steps:
+
+    - Install Docker from [https://www.docker.com/get-started/] or
+      make sure your existing installation is up to date.
+
+    - Make sure Docker is running.
+
+    - Install VSCode from [https://code.visualstudio.com] and start it
+      running.
+
+    - Install VSCode's Remote Containers Extention from [
+        https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers
+        ]
+
+    - Set up a directory for this SF volume by downloading the
+      provided [.tgz] file.  Besides the [.v] file for each chapter,
+      this directory will contain a [.devcontainer] subdirectory with
+      instructions for VSCode about where to find an appropriate
+      Docker image and a [_CoqProject] file, whose presence triggers
+      the VSCoq extension.
+
+    - In VSCode, use [File > Open Folder] to open the new directory.
+      VSCode should ask you whether you want to run the project in the
+      associated Docker container.  (If it does not ask you, you can
+      open the command palette by pressing F1 and run the command “Dev
+      Containers: Reopen in Container”.)
+
+    - Check that VSCoq is working by double-clicking the file
+      [Basics.v] from the list on the left (you should see a blinking
+      cursor in the window that opens; if not you can click in that
+      window to select it), and pressing [alt+downarrow] (on MacOS,
+      [control+option+downarrow]) a few times.  You should see the
+      cursor move through the file and the region above the cursor get
+      highlighted.
+
+    - To see what other key bindings are available, press F1 and then
+      type [Coq:], or visit the VSCoq web pages:
+      [https://github.com/coq-community/vscoq/tree/vscoq1].  *)
 
 (* ================================================================= *)
 (** ** Exercises *)
@@ -331,7 +388,7 @@
 
 (** A tar file containing the full sources for the "release version"
     of this book (as a collection of Coq scripts and HTML files) is
-    available at https://softwarefoundations.cis.upenn.edu.
+    available at {https://softwarefoundations.cis.upenn.edu}.
 
     If you are using the book as part of a class, your professor may
     give you access to a locally modified version of the files; you
@@ -350,15 +407,23 @@
 (** If you want to refer to this volume in your own writing, please
     do so as follows:
 
-   @book            {$FIRSTAUTHOR:SF$VOLUMENUMBER,
-   author       =   {$AUTHORS},
-   title        =   "$VOLUMENAME",
-   series       =   "Software Foundations",
-   volume       =   "$VOLUMENUMBER",
-   year         =   "$VOLUMEYEAR",
-   publisher    =   "Electronic textbook",
-   note         =   {Version $VERSION, \URLhttp://softwarefoundations.cis.upenn.edu },
-   }
+    @book            {Pierce:SF1,
+    author       =   {Benjamin C. Pierce and
+		      Arthur Azevedo de Amorim and
+		      Chris Casinghino and
+		      Marco Gaboardi and
+		      Michael Greenberg and
+		      Cătălin Hriţcu and
+		      Vilhelm Sjöberg and
+		      Brent Yorgey},
+    editor       =   {Benjamin C. Pierce},
+    title        =   "Logical Foundations",
+    series       =   "Software Foundations",
+    volume       =   "1",
+    year         =   "2023",
+    publisher    =   "Electronic textbook",
+    note         =   {Version 6.5, \URL{http://softwarefoundations.cis.upenn.edu}}
+    }
 *)
 
 (* ################################################################# *)
@@ -368,9 +433,9 @@
 (** ** Sample Exams *)
 
 (** A large compendium of exams from many offerings of
-    CIS500 ("Software Foundations") at the University of Pennsylvania
+    CIS5000 ("Software Foundations") at the University of Pennsylvania
     can be found at
-    https://www.seas.upenn.edu/~cis500/current/exams/index.html.
+    {https://www.seas.upenn.edu/~cis5000/current/exams/index.html}.
     There has been some drift of notations over the years, but most of
     the problems are still relevant to the current text. *)
 
@@ -379,17 +444,18 @@
 
 (** Lectures for two intensive summer courses based on _Logical
     Foundations_ (part of the DeepSpec summer school series) can be
-    found at https://deepspec.org/event/dsss17 and
-    https://deepspec.org/event/dsss18/.  The video quality in the
+    found at {https://deepspec.org/event/dsss17} and
+    {https://deepspec.org/event/dsss18/}.  The video quality in the
     2017 lectures is poor at the beginning but gets better in the
     later lectures. *)
 
 (* ################################################################# *)
-(** * Note for Instructors *)
+(** * Note for Instructors and Contributors *)
 
-(** If you plan to use these materials in your own course, you will
-    undoubtedly find things you'd like to change, improve, or add.
-    Your contributions are welcome!
+(** If you plan to use these materials in your own teaching, or if you
+    are using software foundations for self study and are finding
+    things you'd like to help add or improve, your contributions are
+    welcome!  You are warmly invited to join the private SF git repo.
 
     In order to keep the legalities simple and to have a single point
     of responsibility in case the need should ever arise to adjust the
@@ -407,11 +473,13 @@
         2016 as (respectively) "Logical Foundations" and "Programming
         Foundations," and for Volume 4, "QuickChick: Property-Based
         Testing in Coq," the Author of Record is Benjamin C. Pierce.
-        For Volume 3, "Verified Functional Algorithms", the Author of
-        Record is Andrew W. Appel. For components outside of
-        designated volumes (e.g., typesetting and grading tools and
-        other software infrastructure), the Author of Record is
-        Benjamin Pierce.
+        For Volume 3, "Verified Functional Algorithms," and volume 5,
+        "Verifiable C," the Author of Record is Andrew W. Appel. For
+        Volume 6, "Separation Logic Foundations," the author of record
+        is Arthur Chargueraud. For components outside of designated
+        volumes (e.g., typesetting and grading tools and other
+        software infrastructure), the Author of Record is Benjamin
+        Pierce.
 
     To get started, please send an email to Benjamin Pierce,
     describing yourself and how you plan to use the materials and
@@ -419,16 +487,16 @@
     github username.
 
     We'll set you up with access to the git repository and developers'
-    mailing lists.  In the repository you'll find a file [INSTRUCTORS]
-    with further instructions. *)
+    mailing lists.  In the repository you'll find the files
+    [INSTRUCTORS] and [CONTRIBUTING] with further instructions. *)
 
 (* ################################################################# *)
 (** * Translations *)
 
 (** Thanks to the efforts of a team of volunteer translators,
     _Software Foundations_ can be enjoyed in Japanese at
-    http://proofcafe.org/sf.  A Chinese translation is also underway;
-    you can preview it at https://coq-zh.github.io/SF-zh/. *)
+    {http://proofcafe.org/sf}.  A Chinese translation is also underway;
+    you can preview it at {https://coq-zh.github.io/SF-zh/}. *)
 
 (* ################################################################# *)
 (** * Thanks *)
@@ -438,4 +506,4 @@
     NSF Expeditions grant 1521523, _The Science of Deep
     Specification_. *)
 
-(* 2020-08-19 12:54 *)
+(* 2023-10-03 16:40 *)

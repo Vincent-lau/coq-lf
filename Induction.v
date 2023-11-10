@@ -1,69 +1,72 @@
 (** * Induction: Proof by Induction *)
 
-(** Before getting started, we need to import all of our
-    definitions from the previous chapter: *)
+(* ################################################################# *)
+(** * Separate Compilation *)
+
+(** Before getting started on this chapter, we need to import
+    all of our definitions from the previous chapter: *)
 
 From LF Require Export Basics.
 
-(** For the [Require Export] to work, Coq needs to be able to
-    find a compiled version of [Basics.v], called [Basics.vo], in a
-    directory associated with the prefix [LF].  This file is analogous
-    to the [.class] files compiled from [.java] source files and the
-    [.o] files compiled from [.c] files.
+(** For this [Require Export] command to work, Coq needs to be
+    able to find a compiled version of [Basics.v], called [Basics.vo],
+    in a directory associated with the prefix [LF].  This file is
+    analogous to the [.class] files compiled from [.java] source files
+    and the [.o] files compiled from [.c] files.
 
     First create a file named [_CoqProject] containing the following
     line (if you obtained the whole volume "Logical Foundations" as a
     single archive, a [_CoqProject] should already exist and you can
     skip this step):
 
-      [-Q . LF]
+      -Q . LF
 
     This maps the current directory ("[.]", which contains [Basics.v],
     [Induction.v], etc.) to the prefix (or "logical directory")
-    "[LF]".  PG and CoqIDE read [_CoqProject] automatically, so they
-    know to where to look for the file [Basics.vo] corresponding to
-    the library [LF.Basics].
+    "[LF]".  Proof General and CoqIDE read [_CoqProject]
+    automatically, so they know to where to look for the file
+    [Basics.vo] corresponding to the library [LF.Basics].
 
     Once [_CoqProject] is thus created, there are various ways to
     build [Basics.vo]:
 
-     - In Proof General: The compilation can be made to happen
-       automatically when you submit the [Require] line above to PG,
-       by setting the emacs variable [coq-compile-before-require] to
-       [t]. You can also use the menu option "Coq -> Auto
-       Compilation -> Compile Before Require".
+     - In Proof General or CoqIDE, the compilation should happen
+       automatically when you submit the [Require] line above to PG.
 
-     - In CoqIDE: Open [Basics.v]; then, in the "Compile" menu, click
-       on "Compile Buffer".
+     - For VSCode users, open the terminal pane at the bottom
+       and then use the command line instructions below.
+       (If you downloaded the project setup .tgz file, just doing `make`
+       should build all the code.)
 
-     - From the command line: Generate a [Makefile] using the
-       [coq_makefile] utility, that comes installed with Coq (if you
-       obtained the whole volume as a single archive, a [Makefile]
-       should already exist and you can skip this step):
+     - If you want to compile from the command line, generate a
+       [Makefile] using the [coq_makefile] utility, which comes
+       installed with Coq (if you obtained the whole volume as a
+       single archive, a [Makefile] should already exist and you can
+       skip this step):
 
-         [coq_makefile -f _CoqProject *.v -o Makefile]
+         coq_makefile -f _CoqProject *.v -o Makefile
 
        Note: You should rerun that command whenever you add or remove
        Coq files to the directory.
 
-       Then you can compile [Basics.v] by running [make] with the
+       Now you can compile [Basics.v] by running [make] with the
        corresponding [.vo] file as a target:
 
-         [make Basics.vo]
+         make Basics.vo
 
        All files in the directory can be compiled by giving no
        arguments:
 
-         [make]
+         make
 
        Under the hood, [make] uses the Coq compiler, [coqc].  You can
        also run [coqc] directly:
 
-         [coqc -Q . LF Basics.v]
+         coqc -Q . LF Basics.v
 
        But [make] also calculates dependencies between source files to
        compile them in the right order, so [make] should generally be
-       prefered over explicit [coqc].
+       preferred over explicit [coqc].
 
     If you have trouble (e.g., if you get complaints about missing
     identifiers later in the file), it may be because the "load path"
@@ -72,8 +75,8 @@ From LF Require Export Basics.
 
     In particular, if you see a message like
 
-        [Compiled library Foo makes inconsistent assumptions over
-        library Bar]
+        Compiled library Foo makes inconsistent assumptions over
+        library Bar
 
     check whether you have multiple installations of Coq on your
     machine.  It may be that commands (like [coqc]) that you execute
@@ -98,12 +101,12 @@ From LF Require Export Basics.
 (* ################################################################# *)
 (** * Proof by Induction *)
 
-(** We can prove that [0] is a neutral element for [+] on the left
+(** We can prove that [0] is a neutral element for [+] on the _left_
     using just [reflexivity].  But the proof that it is also a neutral
     element on the _right_ ... *)
 
-Theorem plus_n_O_firsttry : forall n:nat,
-  n = n + 0.
+Theorem add_0_r_firsttry : forall n:nat,
+  n + 0 = n.
 
 (** ... can't be done in the same simple way.  Just applying
   [reflexivity] doesn't work, since the [n] in [n + 0] is an arbitrary
@@ -120,8 +123,8 @@ Abort.
     goes through fine, but in the branch where [n = S n'] for some [n'] we
     get stuck in exactly the same way. *)
 
-Theorem plus_n_O_secondtry : forall n:nat,
-  n = n + 0.
+Theorem add_0_r_secondtry : forall n:nat,
+  n + 0 = n.
 Proof.
   intros n. destruct n as [| n'] eqn:E.
   - (* n = 0 *)
@@ -131,33 +134,33 @@ Proof.
 Abort.
 
 (** We could use [destruct n'] to get one step further, but,
-    since [n] can be arbitrarily large, if we just go on like this
-    we'll never finish. *)
+    since [n] can be arbitrarily large, we'll never get all the there
+    if we just go on like this. *)
 
 (** To prove interesting facts about numbers, lists, and other
-    inductively defined sets, we usually need a more powerful
-    reasoning principle: _induction_.
+    inductively defined sets, we often need a more powerful reasoning
+    principle: _induction_.
 
-    Recall (from high school, a discrete math course, etc.) the
-    _principle of induction over natural numbers_: If [P(n)] is some
-    proposition involving a natural number [n] and we want to show
-    that [P] holds for all numbers [n], we can reason like this:
+    Recall (from a discrete math course, probably) the _principle of
+    induction over natural numbers_: If [P(n)] is some proposition
+    involving a natural number [n] and we want to show that [P] holds for
+    all numbers [n], we can reason like this:
          - show that [P(O)] holds;
-         - show that, for any [n'], if [P(n')] holds, then so does
-           [P(S n')];
+         - show that, for any [n'], if [P(n')] holds, then so does [P(S
+           n')];
          - conclude that [P(n)] holds for all [n].
 
     In Coq, the steps are the same: we begin with the goal of proving
     [P(n)] for all [n] and break it down (by applying the [induction]
-    tactic) into two separate subgoals: one where we must show [P(O)]
-    and another where we must show [P(n') -> P(S n')].  Here's how
-    this works for the theorem at hand: *)
+    tactic) into two separate subgoals: one where we must show [P(O)] and
+    another where we must show [P(n') -> P(S n')].  Here's how this works
+    for the theorem at hand: *)
 
-Theorem plus_n_O : forall n:nat, n = n + 0.
+Theorem add_0_r : forall n:nat, n + 0 = n.
 Proof.
   intros n. induction n as [| n' IHn'].
   - (* n = 0 *)    reflexivity.
-  - (* n = S n' *) simpl. rewrite <- IHn'. reflexivity.  Qed.
+  - (* n = S n' *) simpl. rewrite -> IHn'. reflexivity.  Qed.
 
 (** Like [destruct], the [induction] tactic takes an [as...]
     clause that specifies the names of the variables to be introduced
@@ -178,7 +181,7 @@ Proof.
     in this case becomes [S n' = (S n') + 0], which simplifies to
     [S n' = S (n' + 0)], which in turn follows from [IHn']. *)
 
-Theorem minus_diag : forall n,
+Theorem minus_n_n : forall n,
   minus n n = 0.
 Proof.
   (* WORKED IN CLASS *)
@@ -193,46 +196,33 @@ Proof.
     variables, the [induction] tactic will automatically move them
     into the context as needed.) *)
 
-(** **** Exercise: 2 stars, standard, especially useful (basic_induction) 
+(** **** Exercise: 2 stars, standard, especially useful (basic_induction)
 
     Prove the following using induction. You might need previously
     proven results. *)
 
-Theorem mult_0_r : forall n:nat,
+Theorem mul_0_r : forall n:nat,
   n * 0 = 0.
 Proof.
-  induction n as [| n' IHn'].
-  - simpl. reflexivity.
-  - simpl. rewrite -> IHn'. reflexivity.
-Qed.
+  (* FILL IN HERE *) Admitted.
 
 Theorem plus_n_Sm : forall n m : nat,
   S (n + m) = n + (S m).
 Proof.
-  induction n as [| n' IHn'].
-  - simpl. reflexivity.
-  - simpl. intros m. rewrite -> IHn'. reflexivity.
-Qed.
+  (* FILL IN HERE *) Admitted.
 
-Theorem plus_comm : forall n m : nat,
+Theorem add_comm : forall n m : nat,
   n + m = m + n.
 Proof.
-  induction n as [| n' IHn'].
-  - simpl. apply plus_n_O.
-  - simpl. intros m. rewrite -> IHn'. rewrite -> plus_n_Sm. reflexivity.
-Qed.
+  (* FILL IN HERE *) Admitted.
 
-
-Theorem plus_assoc : forall n m p : nat,
+Theorem add_assoc : forall n m p : nat,
   n + (m + p) = (n + m) + p.
 Proof.
-  induction n as [| n' IHn'].
-  - simpl. reflexivity.
-  - simpl. intros m p. rewrite -> IHn'. reflexivity.
-Qed.
+  (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard (double_plus) 
+(** **** Exercise: 2 stars, standard (double_plus)
 
     Consider the following function, which doubles its argument: *)
 
@@ -246,31 +236,35 @@ Fixpoint double (n:nat) :=
 
 Lemma double_plus : forall n, double n = n + n .
 Proof.
-  induction n as [| n' IHn'].
-  - simpl. reflexivity.
-  - simpl. rewrite -> IHn'. rewrite -> plus_n_Sm. reflexivity.
-Qed.
+  (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, optional (evenb_S) 
+(** **** Exercise: 2 stars, standard (eqb_refl)
 
-    One inconvenient aspect of our definition of [evenb n] is the
-    recursive call on [n - 2]. This makes proofs about [evenb n]
+    The following theorem relates the computational equality [=?] on
+    [nat] with the definitional equality [=] on [bool]. *)
+Theorem eqb_refl : forall n : nat,
+  (n =? n) = true.
+Proof.
+  (* FILL IN HERE *) Admitted.
+(** [] *)
+
+(** **** Exercise: 2 stars, standard, optional (even_S)
+
+    One inconvenient aspect of our definition of [even n] is the
+    recursive call on [n - 2]. This makes proofs about [even n]
     harder when done by induction on [n], since we may need an
     induction hypothesis about [n - 2]. The following lemma gives an
-    alternative characterization of [evenb (S n)] that works better
+    alternative characterization of [even (S n)] that works better
     with induction: *)
 
-Theorem evenb_S : forall n : nat,
-  evenb (S n) = negb (evenb n).
+Theorem even_S : forall n : nat,
+  even (S n) = negb (even n).
 Proof.
-  induction n as [| n' IHn'].
-  - simpl. reflexivity.
-  - rewrite -> IHn'. simpl. rewrite -> negb_involutive. reflexivity.
-Qed.
+  (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 1 star, standard, optional (destruct_induction) 
+(** **** Exercise: 1 star, standard, optional (destruct_induction)
 
     Briefly explain the difference between the tactics [destruct]
     and [induction].
@@ -278,8 +272,6 @@ Qed.
 (* FILL IN HERE *)
 *)
 
-(* Do not modify the following line: *)
-Definition manual_grade_for_destruct_induction : option (nat*string) := None.
 (** [] *)
 
 (* ################################################################# *)
@@ -287,7 +279,7 @@ Definition manual_grade_for_destruct_induction : option (nat*string) := None.
 
 (** In Coq, as in informal mathematics, large proofs are often
     broken into a sequence of theorems, with later proofs referring to
-    earlier theorems.  But sometimes a proof will require some
+    earlier theorems.  But sometimes a proof will involve some
     miscellaneous fact that is too trivial and of too little general
     interest to bother giving it its own top-level name.  In such
     cases, it is convenient to be able to simply state and prove the
@@ -295,62 +287,61 @@ Definition manual_grade_for_destruct_induction : option (nat*string) := None.
     [assert] tactic allows us to do this. *)
 
 Theorem mult_0_plus' : forall n m : nat,
-  (0 + n) * m = n * m.
+  (n + 0 + 0) * m = n * m.
 Proof.
   intros n m.
-  assert (H: 0 + n = n). { reflexivity. }
+  assert (H: n + 0 + 0 = n).
+    { rewrite add_comm. simpl. rewrite add_comm. reflexivity. }
   rewrite -> H.
   reflexivity.  Qed.
 
 (** The [assert] tactic introduces two sub-goals.  The first is
     the assertion itself; by prefixing it with [H:] we name the
     assertion [H].  (We can also name the assertion with [as] just as
-    we did above with [destruct] and [induction], i.e., [assert (0 + n
-    = n) as H].)  Note that we surround the proof of this assertion
-    with curly braces [{ ... }], both for readability and so that,
-    when using Coq interactively, we can see more easily when we have
-    finished this sub-proof.  The second goal is the same as the one
-    at the point where we invoke [assert] except that, in the context,
-    we now have the assumption [H] that [0 + n = n].  That is,
-    [assert] generates one subgoal where we must prove the asserted
-    fact and a second subgoal where we can use the asserted fact to
-    make progress on whatever we were trying to prove in the first
-    place. *)
+    we did above with [destruct] and [induction], i.e., [assert (n + 0
+    + 0 = n) as H].)  Note that we surround the proof of this
+    assertion with curly braces [{ ... }], both for readability and so
+    that, when using Coq interactively, we can see more easily when we
+    have finished this sub-proof.  The second goal is the same as the
+    one at the point where we invoke [assert] except that, in the
+    context, we now have the assumption [H] that [n + 0 + 0 = n].
+    That is, [assert] generates one subgoal where we must prove the
+    asserted fact and a second subgoal where we can use the asserted
+    fact to make progress on whatever we were trying to prove in the
+    first place. *)
 
-(** Another example of [assert]... *)
-
-(** For example, suppose we want to prove that [(n + m) + (p + q)
-    = (m + n) + (p + q)]. The only difference between the two sides of
-    the [=] is that the arguments [m] and [n] to the first inner [+]
-    are swapped, so it seems we should be able to use the
-    commutativity of addition ([plus_comm]) to rewrite one into the
+(** As another example, suppose we want to prove that [(n + m)
+    + (p + q) = (m + n) + (p + q)]. The only difference between the
+    two sides of the [=] is that the arguments [m] and [n] to the
+    first inner [+] are swapped, so it seems we should be able to use
+    the commutativity of addition ([add_comm]) to rewrite one into the
     other.  However, the [rewrite] tactic is not very smart about
     _where_ it applies the rewrite.  There are three uses of [+] here,
-    and it turns out that doing [rewrite -> plus_comm] will affect
-    only the _outer_ one... *)
+    and it turns out that doing [rewrite -> add_comm] will affect only
+    the _outer_ one... *)
 
 Theorem plus_rearrange_firsttry : forall n m p q : nat,
   (n + m) + (p + q) = (m + n) + (p + q).
 Proof.
   intros n m p q.
   (* We just need to swap (n + m) for (m + n)... seems
-     like plus_comm should do the trick! *)
-  rewrite -> plus_comm.
+     like add_comm should do the trick! *)
+  rewrite add_comm.
   (* Doesn't work... Coq rewrites the wrong plus! :-( *)
 Abort.
 
-(** To use [plus_comm] at the point where we need it, we can introduce
-    a local lemma stating that [n + m = m + n] (for the particular [m]
+(** To use [add_comm] at the point where we need it, we can introduce
+    a local lemma stating that [n + m = m + n] (for the _particular_ [m]
     and [n] that we are talking about here), prove this lemma using
-    [plus_comm], and then use it to do the desired rewrite. *)
+    [add_comm], and then use it to do the desired rewrite. *)
 
 Theorem plus_rearrange : forall n m p q : nat,
   (n + m) + (p + q) = (m + n) + (p + q).
 Proof.
   intros n m p q.
   assert (H: n + m = m + n).
-  { rewrite -> plus_comm. reflexivity. }
-  rewrite -> H. reflexivity.  Qed.
+  { rewrite add_comm. reflexivity. }
+  rewrite H. reflexivity.  Qed.
 
 (* ################################################################# *)
 (** * Formal vs. Informal Proof *)
@@ -405,25 +396,25 @@ Proof.
 
 (** For example, here is a proof that addition is associative: *)
 
-Theorem plus_assoc' : forall n m p : nat,
+Theorem add_assoc' : forall n m p : nat,
   n + (m + p) = (n + m) + p.
 Proof. intros n m p. induction n as [| n' IHn']. reflexivity.
-  simpl. rewrite -> IHn'. reflexivity.  Qed.
+  simpl. rewrite IHn'. reflexivity.  Qed.
 
 (** Coq is perfectly happy with this.  For a human, however, it
     is difficult to make much sense of it.  We can use comments and
     bullets to show the structure a little more clearly... *)
 
-Theorem plus_assoc'' : forall n m p : nat,
+Theorem add_assoc'' : forall n m p : nat,
   n + (m + p) = (n + m) + p.
 Proof.
   intros n m p. induction n as [| n' IHn'].
   - (* n = 0 *)
     reflexivity.
   - (* n = S n' *)
-    simpl. rewrite -> IHn'. reflexivity.   Qed.
+    simpl. rewrite IHn'. reflexivity.   Qed.
 
-(** ... and if you're used to Coq you may be able to step
+(** ... and if you're used to Coq you might be able to step
     through the tactics one after the other in your mind and imagine
     the state of the context and goal stack at each point, but if the
     proof were even a little bit more complicated this would be next
@@ -438,7 +429,7 @@ Proof.
 
     _Proof_: By induction on [n].
 
-    - First, suppose [n = 0].  We must show
+    - First, suppose [n = 0].  We must show that
 
         0 + (m + p) = (0 + m) + p.
 
@@ -448,7 +439,7 @@ Proof.
 
         n' + (m + p) = (n' + m) + p.
 
-      We must show
+      We must now show that
 
         (S n') + (m + p) = ((S n') + m) + p.
 
@@ -469,9 +460,9 @@ Proof.
     whereas the informal proof reminds the reader several times where
     things stand). *)
 
-(** **** Exercise: 2 stars, advanced, especially useful (plus_comm_informal) 
+(** **** Exercise: 2 stars, advanced, especially useful (add_comm_informal)
 
-    Translate your solution for [plus_comm] into an informal proof:
+    Translate your solution for [add_comm] into an informal proof:
 
     Theorem: Addition is commutative.
 
@@ -479,57 +470,63 @@ Proof.
 *)
 
 (* Do not modify the following line: *)
-Definition manual_grade_for_plus_comm_informal : option (nat*string) := None.
+Definition manual_grade_for_add_comm_informal : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, optional (eqb_refl_informal) 
+(** **** Exercise: 2 stars, standard, optional (eqb_refl_informal)
 
     Write an informal proof of the following theorem, using the
-    informal proof of [plus_assoc] as a model.  Don't just
+    informal proof of [add_assoc] as a model.  Don't just
     paraphrase the Coq tactics into English!
 
-    Theorem: [true = n =? n] for any [n].
+    Theorem: [(n =? n) = true] for any [n].
 
     Proof: (* FILL IN HERE *)
 *)
+
+(* Do not modify the following line: *)
+Definition manual_grade_for_eqb_refl_informal : option (nat*string) := None.
 (** [] *)
 
 (* ################################################################# *)
 (** * More Exercises *)
 
-(** **** Exercise: 3 stars, standard, especially useful (mult_comm) 
+(** **** Exercise: 3 stars, standard, especially useful (mul_comm)
 
-    Use [assert] to help prove [plus_swap].  You don't need to
+    Use [assert] to help prove [add_shuffle3].  You don't need to
     use induction yet. *)
 
-Theorem plus_swap : forall n m p : nat,
+Theorem add_shuffle3 : forall n m p : nat,
   n + (m + p) = m + (n + p).
 Proof.
-  intros n m p.
-  assert (H: n + (m+p) = (n + m) +p).  { rewrite -> plus_assoc. reflexivity. }
-  rewrite -> H.
-  assert (H1: n + m = m + n). {rewrite -> plus_comm. reflexivity. }
-  rewrite -> H1. rewrite -> plus_assoc. reflexivity.
-Qed.
+  (* FILL IN HERE *) Admitted.
 
-(** Now prove commutativity of multiplication.  You will probably
-    want to define and prove a "helper" theorem to be used
-    in the proof of this one. Hint: what is [n * (1 + k)]? *)
+(** Now prove commutativity of multiplication.  You will probably want
+    to look for (or define and prove) a "helper" theorem to be used in
+    the proof of this one. Hint: what is [n * (1 + k)]? *)
 
-Theorem mult_comm : forall m n : nat,
+Theorem mul_comm : forall m n : nat,
   m * n = n * m.
 Proof.
-  induction n as [| n' IHn'].
-  - simpl. 
-    induction m as [| m' IHm'].
-    + reflexivity.
-    + simpl. rewrite -> IHm'. reflexivity.
-  - simpl. rewrite <- IHn'. rewrite <- mult_n_Sm. rewrite -> plus_comm. reflexivity.
-Qed.
+  (* FILL IN HERE *) Admitted.
+(** [] *)
+
+(** **** Exercise: 2 stars, standard, optional (plus_leb_compat_l)
+
+    If a hypothesis has the form [H: P -> a = b], then [rewrite H] will
+    rewrite [a] to [b] in the goal, and add [P] as a new subgoal. Use
+    that in the inductive step of this exercise. *)
+
+Check leb.
+
+Theorem plus_leb_compat_l : forall n m p : nat,
+  n <=? m = true -> (p + n) <=? (p + m) = true.
+Proof.
+  (* FILL IN HERE *) Admitted.
 
 (** [] *)
 
-(** **** Exercise: 3 stars, standard, optional (more_exercises) 
+(** **** Exercise: 3 stars, standard, optional (more_exercises)
 
     Take a piece of paper.  For each of the following theorems, first
     _think_ about whether (a) it can be proved using only
@@ -539,41 +536,22 @@ Qed.
     to turn in your piece of paper; this is just to encourage you to
     reflect before you hack!) *)
 
-Check leb.
-
 Theorem leb_refl : forall n:nat,
-  true = (n <=? n).
+  (n <=? n) = true.
 Proof.
-  induction n as [| n' IHn'].
-  - simpl. reflexivity.
-  - simpl. rewrite -> IHn'. reflexivity.
-Qed. 
+  (* FILL IN HERE *) Admitted.
 
-Theorem zero_nbeq_S : forall n:nat,
+Theorem zero_neqb_S : forall n:nat,
   0 =? (S n) = false.
 Proof.
-  destruct n as [| n'] eqn:Eb.
-  - simpl. reflexivity.
-  - simpl. reflexivity.
-Qed.
- 
+  (* FILL IN HERE *) Admitted.
+
 Theorem andb_false_r : forall b : bool,
   andb b false = false.
 Proof.
-  destruct b as [] eqn:Eb.
-  - reflexivity.
-  - reflexivity.
-Qed.
+  (* FILL IN HERE *) Admitted.
 
-Theorem plus_ble_compat_l : forall n m p : nat,
-  n <=? m = true -> (p + n) <=? (p + m) = true.
-Proof.
-  intros n m. induction p as [| p' IHp' ]. intros H.
-  - simpl. rewrite -> H. reflexivity.
-  - simpl. intros H1. apply IHp'. rewrite -> H1. reflexivity.
-Qed.
-
-Theorem S_nbeq_0 : forall n:nat,
+Theorem S_neqb_0 : forall n:nat,
   (S n) =? 0 = false.
 Proof.
   (* FILL IN HERE *) Admitted.
@@ -583,10 +561,10 @@ Proof.
   (* FILL IN HERE *) Admitted.
 
 Theorem all3_spec : forall b c : bool,
-    orb
-      (andb b c)
-      (orb (negb b)
-               (negb c))
+  orb
+    (andb b c)
+    (orb (negb b)
+         (negb c))
   = true.
 Proof.
   (* FILL IN HERE *) Admitted.
@@ -622,26 +600,42 @@ Qed.
    [u], and generates [t = u] as an additional subgoal. This is often
    useful when a plain [rewrite] acts on the wrong part of the goal.
 
-   Use the [replace] tactic to do a proof of [plus_swap'], just like
-   [plus_swap] but without needing [assert]. *)
+   Use the [replace] tactic to do a proof of [add_shuffle3'], just like
+   [add_shuffle3] but without needing [assert]. *)
 
-Theorem plus_swap' : forall n m p : nat,
+Theorem add_shuffle3' : forall n m p : nat,
   n + (m + p) = m + (n + p).
 Proof.
-  intros n m p.
-  rewrite -> plus_assoc.
-  replace (n + m) with (m + n).
-  - rewrite -> plus_assoc. reflexivity.
-  - rewrite -> plus_comm. reflexivity.
-Qed.
-
+  (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 3 stars, standard, especially useful (binary_commute) 
+(* ################################################################# *)
+(** * Nat to Bin and Back to Nat *)
 
-    Recall the [incr] and [bin_to_nat] functions that you
-    wrote for the [binary] exercise in the [Basics] chapter.  Prove
-    that the following diagram commutes:
+(** Recall the [bin] type we defined in [Basics]: *)
+
+Inductive bin : Type :=
+  | Z
+  | B0 (n : bin)
+  | B1 (n : bin)
+.
+(** Before you start working on the next exercise, replace the stub
+    definitions of [incr] and [bin_to_nat], below, with your solution
+    from [Basics].  That will make it possible for this file to
+    be graded on its own. *)
+
+Fixpoint incr (m:bin) : bin
+  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+
+Fixpoint bin_to_nat (m:bin) : nat
+  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+
+(** In [Basics], we did some unit testing of [bin_to_nat], but we
+    didn't prove its correctness. Now we'll do so. *)
+
+(** **** Exercise: 3 stars, standard, especially useful (binary_commute)
+
+    Prove that the following diagram commutes:
 
                             incr
               bin ----------------------> bin
@@ -655,72 +649,138 @@ Qed.
     That is, incrementing a binary number and then converting it to
     a (unary) natural number yields the same result as first converting
     it to a natural number and then incrementing.
-    Name your theorem [bin_to_nat_pres_incr] ("pres" for "preserves").
 
-    Before you start working on this exercise, copy the definitions of
-    [incr] and [bin_to_nat] from your solution to the [binary]
-    exercise here so that this file can be graded on its own.  If you
-    want to change your original definitions to make the property
-    easier to prove, feel free to do so! *)
+    If you want to change your previous definitions of [incr] or [bin_to_nat]
+    to make the property easier to prove, feel free to do so! *)
 
-(* FILL IN HERE *)
+Theorem bin_to_nat_pres_incr : forall b : bin,
+  bin_to_nat (incr b) = 1 + bin_to_nat b.
+Proof.
+  (* FILL IN HERE *) Admitted.
 
-(* Do not modify the following line: *)
-Definition manual_grade_for_binary_commute : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 5 stars, advanced (binary_inverse) 
+(** **** Exercise: 3 stars, standard (nat_bin_nat) *)
 
-    This is a further continuation of the previous exercises about
-    binary numbers.  You may find you need to go back and change your
-    earlier definitions to get things to work here.
-
-    (a) First, write a function to convert natural numbers to binary
-        numbers. *)
+(** Write a function to convert natural numbers to binary numbers. *)
 
 Fixpoint nat_to_bin (n:nat) : bin
   (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
 
-(** Prove that, if we start with any [nat], convert it to binary, and
-    convert it back, we get the same [nat] we started with.  (Hint: If
-    your definition of [nat_to_bin] involved any extra functions, you
-    may need to prove a subsidiary lemma showing how such functions
-    relate to [nat_to_bin].) *)
+(** Prove that, if we start with any [nat], convert it to [bin], and
+    convert it back, we get the same [nat] which we started with.
+
+    Hint: This proof should go through smoothly using the previous
+    exercise about [incr] as a lemma. If not, revisit your definitions
+    of the functions involved and consider whether they are more
+    complicated than necessary: the shape of a proof by induction will
+    match the recursive structure of the program being verified, so
+    make the recursions as simple as possible. *)
 
 Theorem nat_bin_nat : forall n, bin_to_nat (nat_to_bin n) = n.
 Proof.
   (* FILL IN HERE *) Admitted.
 
-(* Do not modify the following line: *)
-Definition manual_grade_for_binary_inverse_a : option (nat*string) := None.
-
-(** (b) One might naturally expect that we should also prove the
-        opposite direction -- that starting with a binary number,
-        converting to a natural, and then back to binary should yield
-        the same number we started with.  However, this is not the
-        case!  Explain (in a comment) what the problem is. *)
-
-(* FILL IN HERE *)
-
-(* Do not modify the following line: *)
-Definition manual_grade_for_binary_inverse_b : option (nat*string) := None.
-
-(** (c) Define a normalization function -- i.e., a function
-        [normalize] going directly from [bin] to [bin] (i.e., _not_ by
-        converting to [nat] and back) such that, for any binary number
-        [b], converting [b] to a natural and then back to binary yields
-        [(normalize b)].  Prove it.  (Warning: This part is a bit
-        tricky -- you may end up defining several auxiliary lemmas.
-        One good way to find out what you need is to start by trying
-        to prove the main statement, see where you get stuck, and see
-        if you can find a lemma -- perhaps requiring its own inductive
-        proof -- that will allow the main proof to make progress.) Don't
-        define this using [nat_to_bin] and [bin_to_nat]! *)
-
-(* FILL IN HERE *)
-
-(* Do not modify the following line: *)
-Definition manual_grade_for_binary_inverse_c : option (nat*string) := None.
 (** [] *)
 
-(* 2020-08-19 13:48 *)
+(* ################################################################# *)
+(** * Bin to Nat and Back to Bin (Advanced) *)
+
+(** The opposite direction -- starting with a [bin], converting to [nat],
+    then converting back to [bin] -- turns out to be problematic. That
+    is, the following theorem does not hold. *)
+
+Theorem bin_nat_bin_fails : forall b, nat_to_bin (bin_to_nat b) = b.
+Abort.
+
+(** Let's explore why that theorem fails, and how to prove a modified
+    version of it. We'll start with some lemmas that might seem
+    unrelated, but will turn out to be relevant. *)
+
+(** **** Exercise: 2 stars, advanced (double_bin) *)
+
+(** Prove this lemma about [double], which we defined earlier in the
+    chapter. *)
+
+Lemma double_incr : forall n : nat, double (S n) = S (S (double n)).
+Proof.
+  (* FILL IN HERE *) Admitted.
+
+(** Now define a similar doubling function for [bin]. *)
+
+Definition double_bin (b:bin) : bin
+  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+
+(** Check that your function correctly doubles zero. *)
+
+Example double_bin_zero : double_bin Z = Z.
+(* FILL IN HERE *) Admitted.
+
+(** Prove this lemma, which corresponds to [double_incr]. *)
+
+Lemma double_incr_bin : forall b,
+    double_bin (incr b) = incr (incr (double_bin b)).
+Proof.
+  (* FILL IN HERE *) Admitted.
+
+(** [] *)
+
+(** Let's return to our desired theorem: *)
+
+Theorem bin_nat_bin_fails : forall b, nat_to_bin (bin_to_nat b) = b.
+Abort.
+
+(** The theorem fails because there are some [bin] such that we won't
+    necessarily get back to the _original_ [bin], but instead to an
+    "equivalent" [bin].  (We deliberately leave that notion undefined
+    here for you to think about.)
+
+    Explain in a comment, below, why this failure occurs. Your
+    explanation will not be graded, but it's important that you get it
+    clear in your mind before going on to the next part. If you're
+    stuck on this, think about alternative implementations of
+    [double_bin] that might have failed to satisfy [double_bin_zero]
+    yet otherwise seem correct. *)
+
+(* FILL IN HERE *)
+
+(** To solve that problem, we can introduce a _normalization_ function
+    that selects the simplest [bin] out of all the equivalent
+    [bin]. Then we can prove that the conversion from [bin] to [nat] and
+    back again produces that normalized, simplest [bin]. *)
+
+(** **** Exercise: 4 stars, advanced (bin_nat_bin) *)
+
+(** Define [normalize]. You will need to keep its definition as simple
+    as possible for later proofs to go smoothly. Do not use
+    [bin_to_nat] or [nat_to_bin], but do use [double_bin].
+
+    Hint: Structure the recursion such that it _always_ reaches the
+    end of the [bin] and process each bit only once. Do not try to
+    "look ahead" at future bits. *)
+
+Fixpoint normalize (b:bin) : bin
+  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+
+(** It would be wise to do some [Example] proofs to check that your definition of
+    [normalize] works the way you intend before you proceed. They won't be graded,
+    but fill them in below. *)
+
+(* FILL IN HERE *)
+
+(** Finally, prove the main theorem. The inductive cases could be a
+    bit tricky.
+
+    Hint: Start by trying to prove the main statement, see where you
+    get stuck, and see if you can find a lemma -- perhaps requiring
+    its own inductive proof -- that will allow the main proof to make
+    progress. We have one lemma for the [B0] case (which also makes
+    use of [double_incr_bin]) and another for the [B1] case. *)
+
+Theorem bin_nat_bin : forall b, nat_to_bin (bin_to_nat b) = normalize b.
+Proof.
+  (* FILL IN HERE *) Admitted.
+
+(** [] *)
+
+(* 2023-10-03 16:40 *)
