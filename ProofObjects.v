@@ -853,38 +853,76 @@ Fail Definition falso : False := infinite_loop 0.
 
 (** **** Exercise: 2 stars, standard (and_assoc) *)
 Definition and_assoc : forall P Q R : Prop,
-    P /\ (Q /\ R) -> (P /\ Q) /\ R
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+    P /\ (Q /\ R) -> (P /\ Q) /\ R :=
+    fun P Q R: Prop => fun H =>
+    match H with
+    | conj H1 H2 => 
+      match H2 with
+      | conj H3 H4 => conj (conj H1 H3) H4
+      end
+    end.
+
+Check and_assoc. 
 (** [] *)
 
 (** **** Exercise: 3 stars, standard (or_distributes_over_and) *)
 Definition or_distributes_over_and : forall P Q R : Prop,
-    P \/ (Q /\ R) <-> (P \/ Q) /\ (P \/ R)
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+    P \/ (Q /\ R) -> (P \/ Q) /\ (P \/ R) := 
+fun P Q R: Prop => fun H => 
+  match H with
+    | or_introl HP =>
+      conj (or_introl HP) (or_introl HP)
+    | or_intror (conj HQ HR) =>
+      conj (or_intror HQ) (or_intror HR)
+  end.
+Admitted.      
+(* Check or_distributes_over_and. *)
+  
 (** [] *)
 
 (** **** Exercise: 3 stars, standard (negations) *)
 Definition double_neg : forall P : Prop,
-    P -> ~~P
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+    P -> ~~P :=
+  fun P: Prop =>
+    fun p => fun f => (f p).
+
+Check double_neg.
 
 Definition contradiction_implies_anything : forall P Q : Prop,
-    (P /\ ~P) -> Q
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+    (P /\ ~P) -> Q :=
+  fun P Q: Prop =>
+    fun H => match H with
+          | conj H1 H2 => match (H2 H1) with end
+          end.
+
+Check contradiction_implies_anything.
 
 Definition de_morgan_not_or : forall P Q : Prop,
-    ~ (P \/ Q) -> ~P /\ ~Q
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+    ~ (P \/ Q) -> ~P /\ ~Q :=
+    fun P Q => fun H =>
+    conj (fun p => H (or_introl p)) (fun q => H (or_intror q)).
+  
+Check de_morgan_not_or.
+
 (** [] *)
 
 (** **** Exercise: 2 stars, standard (currying) *)
 Definition curry : forall P Q R : Prop,
-    ((P /\ Q) -> R) -> (P -> (Q -> R))
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+    ((P /\ Q) -> R) -> (P -> (Q -> R)) := 
+    fun P Q R => fun H =>
+    fun p => fun q => H (conj p q).
+
+Check curry.
 
 Definition uncurry : forall P Q R : Prop,
-    (P -> (Q -> R)) -> ((P /\ Q) -> R)
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+    (P -> (Q -> R)) -> ((P /\ Q) -> R) :=
+  fun P Q R => fun H => 
+    fun H1 => match H1 with
+           | conj p q => H p q
+           end.
+Check uncurry.
+
+  
 (** [] *)
 
 (* ################################################################# *)
