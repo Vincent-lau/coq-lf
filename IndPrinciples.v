@@ -189,14 +189,15 @@ Inductive booltree : Type :=
 
 Definition booltree_property_type : Type := booltree -> Prop.
 
-Definition base_case (P : booltree_property_type) : Prop
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition base_case (P : booltree_property_type) : Prop :=
+  P bt_empty.
+  
 
-Definition leaf_case (P : booltree_property_type) : Prop
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition leaf_case (P : booltree_property_type) : Prop :=
+  forall b: bool, P (bt_leaf b).
 
-Definition branch_case (P : booltree_property_type) : Prop
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition branch_case (P : booltree_property_type) : Prop :=
+  forall (b: bool) (t1: booltree), (P t1) -> forall t2: booltree, (P t2) -> P (bt_branch b t1 t2).
 
 Definition booltree_ind_type :=
   forall (P : booltree_property_type),
@@ -212,8 +213,8 @@ Definition booltree_ind_type :=
     same type as what you just defined. *)
 
 Theorem booltree_ind_type_correct : booltree_ind_type.
-Proof. (* FILL IN HERE *) Admitted.
-
+Proof. exact booltree_ind.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard (toy_ind)
@@ -229,8 +230,8 @@ Proof. (* FILL IN HERE *) Admitted.
     principle Coq generates is that given above: *)
 
 Inductive Toy : Type :=
-  (* FILL IN HERE *)
-.
+  | con1 (b: bool)
+  | con2 (n: nat) (t: Toy).
 
 (** Show that your definition is correct by proving the following theorem.
     You should be able to instantiate [f] and [g] with your two constructors,
@@ -243,8 +244,10 @@ Theorem Toy_correct : exists f g,
     (forall b : bool, P (f b)) ->
     (forall (n : nat) (t : Toy), P t -> P (g n t)) ->
     forall t : Toy, P t.
-Proof. (* FILL IN HERE *) Admitted.
+Proof. exists (fun b: bool => con1 b), (fun (n:nat) (t:Toy) => con2 n t).
+  exact Toy_ind.
 
+Qed.
 (** [] *)
 
 (* ################################################################# *)
