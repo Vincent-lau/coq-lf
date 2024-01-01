@@ -29,6 +29,7 @@ From Coq Require Import Arith.EqNat. Import Nat.
 From Coq Require Import Lia.
 From Coq Require Import Lists.List. Import ListNotations.
 From Coq Require Import Strings.String.
+From Coq Require Import Program.Tactics.
 From LF Require Import Maps.
 Set Default Goal Selector "!".
 
@@ -463,14 +464,28 @@ Admitted.
     it is sound.  Use the tacticals we've just seen to make the proof
     as short and elegant as possible. *)
 
-Fixpoint optimize_0plus_b (b : bexp) : bexp
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint optimize_0plus_b (b : bexp) : bexp :=
+  match b with
+  | BTrue => BTrue
+  | BFalse => BFalse
+  | BEq a1 a2 => BEq (optimize_0plus a1) (optimize_0plus a2)
+  | BNeq a1 a2 => BNeq (optimize_0plus a1) (optimize_0plus a2)
+  | BLe a1 a2 => BLe (optimize_0plus a1) (optimize_0plus a2)
+  | BGt a1 a2 => BGt (optimize_0plus a1) (optimize_0plus a2)
+  | BNot b1 => BNot (optimize_0plus_b b1)
+  | BAnd b1 b2 => BAnd (optimize_0plus_b b1) (optimize_0plus_b b2)
+  end.
+  
 
 Theorem optimize_0plus_b_sound : forall b,
   beval (optimize_0plus_b b) = beval b.
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  induction b; try (unfold optimize_0plus_b; simpl;
+                   repeat rewrite optimize_0plus_sound; reflexivity).
+  - simpl. rewrite IHb. reflexivity.
+  - simpl. rewrite IHb1. rewrite IHb2. reflexivity.
+Qed.
+
 
 (** **** Exercise: 4 stars, standard, optional (optimize)
 
@@ -778,12 +793,31 @@ Inductive aevalR : aexp -> nat -> Prop :=
 
     Write out a corresponding definition of boolean evaluation as a
     relation (in inference rule notation). *)
-(* FILL IN HERE *)
+
+Module bevalR_first_try.
+
+Inductive bevalR: bexp -> bool -> Prop := 
+  | E_BTrue: bevalR BTrue true
+  | E_BFalse: bevalR BFalse false
+  | E_BEq (e1 e2: aexp) (a1 a2: nat):
+    aevalR e1 a1 -> aevalR e2 a2 -> bevalR (BEq e1 e2) (a1 =? a2)
+  | E_BNeq (e1 e2: aexp) (a1 a2: nat):
+    aevalR e1 a1 -> aevalR e2 a2 -> bevalR (BNeq e1 e2) (negb (a1 =? a2))
+  | E_BLe (e1 e2: aexp) (a1 a2: nat):
+    aevalR e1 a1 -> aevalR e2 a2 -> bevalR (BLe e1 e2) (a1 <=? a2)
+  | E_BGt (e1 e2: aexp) (a1 a2: nat):
+    aevalR e1 a1 -> aevalR e2 a2 -> bevalR (BGt e1 e2) (negb (a1 <=? a2))
+  | E_BNot (e: bexp) (b: bool):
+    bevalR e b -> bevalR (BNot e) (negb b)
+  | E_BAnd (e1 e2: bexp) (b1 b2: bool):
+    bevalR e1 b1 -> bevalR e2 b2 -> bevalR (BAnd e1 e2) (andb b1 b2).
+
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_beval_rules : option (nat*string) := None.
 (** [] *)
 
+End bevalR_first_try.
 (* ================================================================= *)
 (** ** Equivalence of the Definitions *)
 
@@ -825,6 +859,7 @@ Proof.
       * apply IHa2. reflexivity.
 Qed.
 
+
 (** Again, we can make the proof quite a bit shorter using some
     tacticals. *)
 
@@ -848,14 +883,45 @@ Qed.
 
 Reserved Notation "e '==>b' b" (at level 90, left associativity).
 Inductive bevalR: bexp -> bool -> Prop :=
-(* FILL IN HERE *)
-where "e '==>b' b" := (bevalR e b) : type_scope
-.
+  | E_BTrue:
+      BTrue ==>b true
+  | E_BFalse:
+      BFalse ==>b false
+  | E_BEq (e1 e2: aexp) (a1 a2: nat):
+      e1 ==> a1 -> e2 ==> a2 -> (BEq e1 e2) ==>b (a1 =? a2)
+  | E_BNeq (e1 e2: aexp) (a1 a2: nat):
+      e1 ==> a1 -> e2 ==> a2 -> (BNeq e1 e2) ==>b (negb (a1 =? a2))
+  | E_BLe (e1 e2: aexp) (a1 a2: nat):
+      e1 ==> a1 -> e2 ==> a2 -> (BLe e1 e2) ==>b (a1 <=? a2)
+  | E_BGt (e1 e2: aexp) (a1 a2: nat):
+      e1 ==> a1 -> e2 ==> a2 -> (BGt e1 e2) ==>b negb (a1 <=? a2)
+  | E_BNot (e1: bexp) (b1: bool):
+      e1 ==>b b1 -> (BNot e1) ==>b (negb b1)
+  | E_BAnd (e1 e2: bexp) (b1 b2: bool):
+      e1 ==>b b1 -> e2 ==>b b2 -> (BAnd e1 e2) ==>b (andb b1 b2)
+
+where "e '==>b' b" := (bevalR e b) : type_scope.
 
 Lemma beval_iff_bevalR : forall b bv,
   b ==>b bv <-> beval b = bv.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intuition.
+  {
+    induction H; try (simpl;unfold beval; apply aeval_iff_aevalR' in H,H0; rewrite H,H0; reflexivity);
+    try (unfold beval; reflexivity).
+    - simpl. rewrite IHbevalR. reflexivity.
+    - simpl. rewrite IHbevalR1, IHbevalR2. reflexivity.
+  }
+  {
+    generalize dependent bv.
+    induction b; simpl; intros; subst; constructor;
+    try (apply aeval_iff_aevalR'; reflexivity).
+    - apply IHb. reflexivity.
+    - apply IHb1. reflexivity.
+    - apply IHb2. reflexivity.
+  }
+Qed.
+
 (** [] *)
 
 End AExp.
@@ -1556,7 +1622,10 @@ Example ceval_example2:
     Z := 2
   ]=> (Z !-> 2 ; Y !-> 1 ; X !-> 0).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  apply E_Seq with (X!->0).
+  - constructor. reflexivity.
+  - apply E_Seq with ( Y !-> 1; X!-> 0); try (constructor; reflexivity).
+Qed.
 (** [] *)
 
 Set Printing Implicit.
@@ -1664,16 +1733,22 @@ Definition manual_grade_for_XtimesYinZ_spec : option (nat*string) := None.
 Theorem loop_never_stops : forall st st',
   ~(st =[ loop ]=> st').
 Proof.
-  intros st st' contra. unfold loop in contra.
-  remember <{ while true do skip end }> as loopdef
-           eqn:Heqloopdef.
-
   (** Proceed by induction on the assumed derivation showing that
       [loopdef] terminates.  Most of the cases are immediately
       contradictory and so can be solved in one step with
       [discriminate]. *)
+  intros st st' contra. unfold loop in contra.
+  remember <{ while true do skip end }> as loopdef
+           eqn:Heqloopdef.
+  induction contra; try discriminate.
+  - inversion Heqloopdef. rewrite H1 in H. simpl in H. discriminate.
+  - apply IHcontra2 in Heqloopdef. trivial.
+Qed.
+  
+  
 
-  (* FILL IN HERE *) Admitted.
+
+
 (** [] *)
 
 (** **** Exercise: 3 stars, standard (no_whiles_eqv)
@@ -1699,14 +1774,29 @@ Fixpoint no_whiles (c : com) : bool :=
     [no_whilesR c] is provable exactly when [c] is a program with no
     while loops.  Then prove its equivalence with [no_whiles]. *)
 
+
 Inductive no_whilesR: com -> Prop :=
- (* FILL IN HERE *)
-.
+  | W_Skip : no_whilesR <{ skip }>
+  | W_Asgn : forall a x, no_whilesR  <{ x:=a }>
+  | W_Seq : forall c1 c2, no_whilesR <{ c1 }> -> no_whilesR <{ c2 }>
+                     -> no_whilesR <{ c1; c2 }>
+  | W_If: forall b c1 c2, no_whilesR <{ c1 }> -> no_whilesR <{ c2 }>
+                     -> no_whilesR <{ if b then c1 else c2 end }>.
 
 Theorem no_whiles_eqv:
   forall c, no_whiles c = true <-> no_whilesR c.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intuition.
+  {
+    induction c; try constructor;
+      try (simpl in H; apply andb_prop in H; destruct H as [H1 H2]; auto).
+    unfold no_whiles in H. discriminate.
+  }
+  {
+    induction H; try (unfold no_whiles; auto);
+      fold no_whiles; (apply andb_true_intro; auto).
+  }
+Qed.
 (** [] *)
 
 (** **** Exercise: 4 stars, standard (no_whiles_terminating)
@@ -1716,7 +1806,21 @@ Proof.
 
     Use either [no_whiles] or [no_whilesR], as you prefer. *)
 
-(* FILL IN HERE *)
+Theorem no_while_terminates: forall c st,
+  no_whilesR c -> exists st', st =[ c ]=> st'.
+Proof.
+  intuition. generalize dependent st.
+  induction H; intuition.
+  - exists st. constructor.
+  - exists (x !-> (aeval st a) ; st). intros. constructor. reflexivity.
+  - destruct (IHno_whilesR1 st) as [st' IHc1]. destruct (IHno_whilesR2 st') as [st'' IHc2].
+    exists st''. apply E_Seq with (st'); trivial.
+  - destruct (IHno_whilesR1 st) as [st' I1].
+    destruct (IHno_whilesR2 st) as [st'' I2].
+    destruct (beval st b) eqn:Eb.
+    + exists st'. constructor; assumption.
+    + exists st''. constructor; assumption.
+Qed.
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_no_whiles_terminating : option (nat*string) := None.
